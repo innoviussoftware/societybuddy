@@ -28,7 +28,7 @@ class EventController extends Controller
            'event_end_time'=>'required',
            'event_end_date'=>'required',
            'event_type'=>'required',
-           'event_attachment'=>'mimes:pdf,png,jpg'
+          // 'event_attachment'=>'mimes:pdf,png,jpg'
     	]);
 
     	if ($validator->fails()) {
@@ -147,7 +147,7 @@ class EventController extends Controller
            'event_end_time'=>'required',
            'event_end_date'=>'required',
            'event_type'=>'required',
-           'event_attachment'=>'mimes:pdf,png,jpg'
+           //'event_attachment'=>'mimes:pdf,png,jpg'
       ]);
 
       if ($validator->fails()) {

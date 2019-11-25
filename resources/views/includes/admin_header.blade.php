@@ -41,8 +41,8 @@
          <ul class="dropdown-menu">
            <li><a href="{{ route('admin.societies.reports.index',auth()->user()->society_id) }}">Current Visitor</a></li>
            <li><a href="{{ route('admin.societies.visitorreports.index',auth()->user()->society_id) }}">Visitor Report</a></li>
-           <li><a href="{{ route('admin.societies.tenantreports.index',auth()->user()->society_id) }}">Tenant Report</a></li>
-           <li><a href="{{ route('admin.societies.helpers.index',auth()->user()->society_id) }}">Domestichelper Report</a></li>
+           <li><a href="{{ route('admin.societies.tenantreports.index',auth()->user()->society_id) }}">Tenant Directory</a></li>
+           <li><a href="{{ route('admin.societies.helpers.index',auth()->user()->society_id) }}">Domestic helper Report</a></li>
          </ul>
       </li>
       <li><a href="{{ route('admin.societies.helpdesk.index',auth()->user()->society_id) }}"><i class="fa fa-info-circle" aria-hidden="true"></i> Help desk</a></li>
@@ -53,7 +53,10 @@
     <div class="navbar-custom-menu">
       <ul class="nav navbar-nav">
         @role(['society_admin'])
-        <?php $notificationcount=App\Notification::where('type',4)->where('isread','=','0')->count();?>
+        <?php $notificationcount=App\Notification::where('type',4)->where('isread','=','0')->count();
+        $notification=App\Notification::where('type',4)->where('isread','=','0')->with('user')->get();?>
+        @if(count($notification) > 0)
+                                
         <li class="dropdown notifications-menu">
             <a href="#" class="dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
               <i class="fa fa-bell-o"></i>
@@ -63,17 +66,85 @@
               <li class="header"><?php if($notificationcount !='0'){?>You have {{$notificationcount}} notifications<?php }?></li>
               <li>
                 <ul class="menu">
+                  @foreach($notification as $b)
+                  <li>
+                    <a href="{{ route('admin.member.viewnotification',[auth()->user()->society_id,$b->id]) }}">
+                      <i class="fa fa-user"></i> {{$b->user->name}} have registered successfully 
+                    </a>
+                  </li>
+                  @endforeach
+                </ul>
+              </li>
+              <!-- <li class="footer"><a href="{{ route('admin.societies.members.index',auth()->user()->society_id) }}">View all</a></li> -->
+            </ul>
+        </li>
+        
+         @else
+          <li class="dropdown notifications-menu">
+            <a href="#" class="dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
+              <i class="fa fa-bell-o"></i>
+              <span class="label label-warning">{{$notificationcount}}</span>
+            </a>
+            <ul class="dropdown-menu">
+              <li>
+                <ul class="menu">
                   <li>
                     <a href="#">
-                      <i class="fa fa-users text-aqua"></i> 5 new members joined today
+                      Notification Not Found
                     </a>
                   </li>
                 </ul>
               </li>
-              <li class="footer"><a href="{{ route('admin.societies.members.index',auth()->user()->society_id) }}">View all</a></li>
             </ul>
-        </li>
+          </li>
+        @endif
         @endrole
+
+        @role(['admin','sub_admin'])
+        <?php $referralcount=App\Referral::where('isread','=','0')->count();
+        $referral=App\Referral::where('isread','=','0')->with('user')->get();?>
+            @if(count($referral) > 0)
+                      <li class="dropdown notifications-menu">
+                          <a href="#" class="dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
+                            <i class="fa fa-bell-o"></i>
+                            <span class="label label-warning">{{$referralcount}}</span>
+                          </a>
+                          <ul class="dropdown-menu">
+                            <li class="header"><?php if($referralcount !='0'){?>You have {{$referralcount}} notifications<?php }?></li>
+                            <li>
+                              <ul class="menu">
+                                @foreach($referral as $r)
+                                <li>
+                                  <a href="{{ route('admin.referral.viewnotification',$r->id) }}">
+                                    {{isset($r->user->name)?$r->user->name:''}} has referral for {{isset($r->society_name)?$r->society_name:''}}.  
+                                  </a>
+                                </li>
+                                @endforeach
+                              </ul>
+                            </li>
+                          </ul>
+                      </li>
+            @else
+                      <li class="dropdown notifications-menu">
+                          <a href="#" class="dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
+                            <i class="fa fa-bell-o"></i>
+                            <span class="label label-warning">0</span>
+                          </a>
+                          <ul class="dropdown-menu">
+                            <li>
+                              <ul class="menu">
+                                <li>
+                                  <a href="#">
+                                    Notification Not Found
+                                  </a>
+                                </li>
+                              </ul>
+                            </li>
+                          </ul>
+                      </li>
+            @endif
+            @endrole
+
         <li class="dropdown user user-menu">
           <a href="{{ env('APP_URL') }}/admin_assets/#" class="dropdown-toggle" data-toggle="dropdown">
             <img src="{{ env('APP_URL') }}/admin_assets/dist/img/user2-160x160.jpg" class="user-image" alt="User Image">

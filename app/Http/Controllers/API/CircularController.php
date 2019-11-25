@@ -20,17 +20,18 @@ class CircularController extends Controller
     //
     public function addcircular(Request $request)
 	{
+
 		$validator = Validator::make($request->all(),[
            'society_id'  => 'required',
            'building_id'  => 'required',
            'title' => 'required',
            'description'  => 'required',
-           'pdffile'=>'mimes:pdf,png,jpg'
+           //'pdffile'=>'mimes:pdf,png,jpg|max:2048'
     	]);
 
     	if ($validator->fails()) {
             $errorMessage = implode(',', $validator->errors()->all());
-            return response()->json(['data' => $errorMessage,'status'=>0,'message' => "Please enter valid data."] , 200);
+            return response()->json(['data' =>(Object)[],'status'=>0,'message' => $errorMessage] , 200);
         }else
         {
         	if(request('pdffile'))
@@ -136,7 +137,7 @@ class CircularController extends Controller
            'building_id'  => 'required',
            'title' => 'required',
            'description'  => 'required',
-           'pdffile'=>'mimes:pdf,png,jpg'
+           // 'pdffile'=>'mimes:pdf,png,jpg'
         ]);
 
         if ($validator->fails()) {

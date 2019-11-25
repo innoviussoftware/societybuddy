@@ -466,8 +466,11 @@ class GuardController extends Controller
         if($type=='1')
         {
 
-            //if($user_type=='1' || $user_type=='1')
-            //{
+            $visitor=Inouts::where('request_id',$id)->where('type',$user_type)->where('flag',1)->first();
+
+            if($visitor['intime'] == null)
+            {
+                
                     $inouts = new Inouts();
                     $inouts->society_id = request('society_id');
                     $inouts->guard_id = request('guard_id');
@@ -482,50 +485,45 @@ class GuardController extends Controller
                     $Visitor=InviteGuest::where('id',$id)->update(['flag'=>1]);
 
 
-                    return response()->json(['data' => $inouts,'status'=>1,'message' => "Entry In Successfully."] , 200);
-            //}
-
-            // if($user_type=='2' || $user_type=='2')
-            // {
-            //         $inouts = new Inouts();
-            //         $inouts->society_id = request('society_id');
-            //         $inouts->guard_id = request('guard_id');
-            //         $inouts->request_id = $id;
-            //         $inouts->type = 2;
-            //         $inouts->intime = request('intime');
-            //         $inouts->flag = 1;
-            //         $inouts->building_id=request('building_id');
-            //         $inouts->flat_id=request('flat_id');
-            //         $inouts->save();
-
-            //         return response()->json(['data' => $inouts,'status'=>1,'message' => "Entry In Successfully"] , 200);
-            // }
+                    return response()->json(['data' => $inouts,'status'=>1,'message' => "Entry In Successfully."] , 200);                
+            }
+            else
+            {
+                 return response()->json(['data' => (Object)[],'status'=>0,'message' => "Guest is already IN."] , 200);
+            }
         }
 
         if($type=='2')
         {
-
+           
+            $visitor=Inouts::where('request_id',$id)->where('type','=',$user_type)->where('flag',1)->orderBy('created_at', 'desc')->first();
             
+            if(isset($visitor))
+            {
+                if($visitor['outtime'] == null)
+                {
                 $Visitor=Inouts::where('request_id',$id)->where('type',$user_type)->update(['flag'=>2,'outtime'=>request('outtime')]);
 
                 $Visitor=Inouts::where('request_id',$id)->where('type',$user_type)->get();
 
-            if($user_type=='1' || $user_type=='1')
-            {
-                $Visitor=InviteGuest::where('id',$id)->update(['flag'=>2]);
+                if($user_type=='1' || $user_type=='1')
+                {
+                    $Visitor=InviteGuest::where('id',$id)->update(['flag'=>2]);
+                }
+                if($user_type=='2' || $user_type=='2')
+                {
+                    $Visitor=Visitor::where('id',$id)->update(['inOutFlag'=>2]);
+                    $Visitor=Inouts::where('request_id',$id)->where('type',2)->get();
+                }
+
+                return response()->json(['data' => $Visitor,'status'=>1,'message' => "Entry Out Successfully."] , 200);
+                }
             }
-            if($user_type=='2' || $user_type=='2')
+            else
             {
-               
-
-                $Visitor=Visitor::where('id',$id)->update(['inOutFlag'=>2]);
-
-
-                $Visitor=Inouts::where('request_id',$id)->where('type',2)->get();
-
-               
+                
+                return response()->json(['data' => [],'status'=>0,'message' => "Guest is already OUT."] , 200);
             }
-             return response()->json(['data' => $Visitor,'status'=>1,'message' => "Entry Out Successfully."] , 200);
         }
     }
 
@@ -1194,7 +1192,7 @@ class GuardController extends Controller
 
         if($building_id=='0')
         {
-            $member=Member::where('relation','=','self')->where('society_id',$society_id)->with('user','flat','building','vehicle')->whereHas('user', function($q){
+            $member=Member::where('society_id',$society_id)->with('user','flat','building','vehicle')->whereHas('user', function($q){
               $q->where('activate', 1);
             })->get();
 
@@ -1356,6 +1354,25 @@ class GuardController extends Controller
             return response()->json(['data' => $HelpersInout,'status'=>1,'message' => "Entry Out Successfully."] , 200);
         }
              
+    }
+
+    public function verifyvehical(Request $request)
+    {
+        $vehicle_number=request('vehicle_number');
+
+        $society_id=request('society_id');
+        
+        $vehicle=Vehicle::where('number','=',$vehicle_number)->with('user')->whereHas('user',function($q) use ($society_id){
+            $q->where('society_id',$society_id);
+        })->first();
+        
+        if($vehicle)
+        {
+            return response()->json(['data' => (Object)[],'status'=>1,'message' => "Vehicle Verified."] , 200);
+        }else
+        {
+            return response()->json(['data' => (Object)[],'status'=>0,'message' => "Vehicle not verified."] , 200);
+        }
     }
 
 

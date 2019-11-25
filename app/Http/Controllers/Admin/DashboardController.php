@@ -9,6 +9,8 @@ use App\Guard;
 use App\Visitor;
 use App\Building;
 use App\Member;
+use App\Vehicle;
+use App\Inouts;
 use DB;
 
 class DashboardController extends Controller
@@ -40,10 +42,19 @@ class DashboardController extends Controller
         ["day" => date('l', strtotime('-6 days')), "visitors" => 0]
       ];
         if(auth()->user()->hasRole('society_admin')){
+          $society_id=auth()->user()->society_id;
             $total_guards = Guard::where('society_id',auth()->user()->society_id)->get()->count();
-            $total_visitors = Visitor::where('society_id',auth()->user()->society_id)->get()->count();
+            //$total_visitors = Visitor::where('society_id',auth()->user()->society_id)->get()->count();
+            $total_visitors = Inouts::where('flag',1)->where("society_id",auth()->user()->society_id)->with('visitorlist','invitelist')->where('type','!=',3)->get()->count();
             $total_buildings = Building::where('society_id',auth()->user()->society_id)->get()->count();
             $total_members = Member::where('society_id',auth()->user()->society_id)->get()->count();
+            $total_two_vehicles=Vehicle::where('type','=','Two Wheeler')->with('user')->whereHas('user'     ,function($q) use ($society_id){
+                      $q->where('society_id',$society_id);
+            })->count();
+            $total_four_vehicles=Vehicle::where('type','=','Four Wheeler')->with('user')->whereHas('user'     ,function($q) use ($society_id){
+                      $q->where('society_id',$society_id);
+            })->count();
+
             $date = \Carbon\Carbon::today()->subDays(6);
             $users = Visitor::select(DB::raw('DATE_FORMAT(created_at, "%W") as date'), DB::raw('count(*) as visitors'))
                               ->where('created_at', '>=', $date)
@@ -66,11 +77,15 @@ class DashboardController extends Controller
             $total_visitors = Visitor::all()->count();
             $total_buildings = Building::all()->count();
             $total_members = Member::all()->count();
+            $total_two_vehicles='';
+            $total_four_vehicles='';
         }
         $data['total_guards'] = $total_guards;
         $data['total_visitors'] = $total_visitors;
         $data['total_buildings'] = $total_buildings;
         $data['total_members'] = $total_members;
+        $data['total_two_vehicles'] = $total_two_vehicles;
+        $data['total_four_vehicles'] = $total_four_vehicles;
 
         $days = array_column($graph_data, 'day');
         $days[0] = "Today";

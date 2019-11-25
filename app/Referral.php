@@ -13,4 +13,8 @@ class Referral extends Model
       'user_id', 'society_id', 'contact','society_name'
     ];
 
+     public function user(){
+        return $this->belongsTo('App\User','user_id');
+    }
+
 }

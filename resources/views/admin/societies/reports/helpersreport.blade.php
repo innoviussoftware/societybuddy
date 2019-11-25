@@ -9,14 +9,14 @@
 
 <section class="content-header">
   <h1>
-    Domestichelpers Reports
+    Domestic helpers Reports
     <small>{{ $society->name }}</small>
   </h1>
   <ol class="breadcrumb">
     <li><a href="{{ route('admin.dashboard') }}"><i class="fa fa-dashboard"></i> Dashboard</a></li>
     <li><a href="{{ route('admin.societies.index') }}">Societies</a></li>
     <li><a href="{{ route('admin.societies.edit', $society->id) }}">{{ $society->name }}</a></li>
-    <li><a href="#">Domestichelpers Reports</a></li>
+    <li><a href="#">Domestic helpers Reports</a></li>
   </ol>
 </section>
 
@@ -46,6 +46,7 @@
               <th>Guard Name</th>
               <th>In Time</th>
               <th>Out Time</th>
+              <th>Action</th>
             </tr>
             </thead>
           </table>

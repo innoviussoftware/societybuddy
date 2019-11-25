@@ -30,7 +30,6 @@ class UserController extends Controller
 
   public function getfamilyMemberList($userId)
     {
-
         $Member=Member::where('user_id',$userId)->first();
 
         if($Member->relation=='self')
@@ -54,9 +53,7 @@ class UserController extends Controller
 
             $res = array_merge($id, $id2); 
 
-
             return $res;
-
         }
         else
         {
@@ -79,10 +76,7 @@ class UserController extends Controller
             $res = array_merge($id, $id2); 
 
             return $res;
-
         }
-
-
     }
 
     public function register(Request $request) {
@@ -116,9 +110,11 @@ class UserController extends Controller
                 'password' => Hash::make('user@123'),
                 'phone' => request('phone')
             ]);
+
             if($user->id){
 
                 $users = User::find($user->id);
+                
                 $users->attachRole(9);
                 $users->role = "Committee Member";
                 $users->token = $users->createToken('MyApp')->accessToken;
@@ -693,7 +689,7 @@ class UserController extends Controller
 
         if($building_id=='0')
         {
-            $member=Member::where('relation','=','self')->where('society_id',$society_id)->with('user','flat','building','vehicle')->where('user_id','!=',$user_id)->with(['user'])->whereHas('user', function($q){
+            $member=Member::where('society_id',$society_id)->with('user','flat','building','vehicle')->where('user_id','!=',$user_id)->with(['user'])->whereHas('user', function($q){
               $q->where('activate', 1);
             })->get();
         }

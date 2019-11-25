@@ -208,6 +208,7 @@ class GuardController extends Controller
             $err[] = '';
             if($data->count()){
                 foreach ($data as $key => $value) {
+
                     $keyid = $key + 2;
                     if(empty($value->phone)){
                       $err[] = $value->name . " mobile number is empty.";
@@ -220,24 +221,30 @@ class GuardController extends Controller
                       $err[] = $value->name . " mobile number is already exists.";
                     } 
                     $building = Building::where('name', $value->building)->where('society_id',$request->society_id)->first();
+                    
                     if($building){
                       $building_id = $building->id;
+
                     }else{
                       $err[] = $value->name . " Building not exists.";
                     }
-                    $flat = Flat::where('name',(int) $value->flat_no)->where('building_id',$building_id)->first();
+                    $flat = Flat::where('name',(int) $value->flat_no)->where('building_id',isset($building_id)?$building_id:'')->first();
                     
                     if($flat){
                       $flat_id = $flat->id;
                     }else{
                       $err[] = $value->name . " flat not exists.";
                     }
-                    $arr[] = ['name' => $value->name, 'phone' =>(int) $value->phone , 'building' => $building_id ,'flat' => $flat_id, 'gender' => $value->gender,'relation'=>$value->relation,'flattype'=>$value->flattype];
+                    
+                    $arr[] = ['name' =>$value->name, 'phone' =>(int) $value->phone , 'building' =>$building_id ,'flat' =>$flat_id, 'gender' => $value->gender,'relation'=>$value->relation,'flattype'=>$value->flattype];
+                    
                 }
-                if(count($err) > 1){
+                
+                if(count($err) > 0){
+                  
                   return redirect()->back()->withInput($request->all())->withErrors($err);
                 }else{
-                  
+                  // dd('here');
                   if(!empty($arr)){
                       foreach ($arr as $key => $dv) {
                         //$building = Building::where('name', $dv['building'])->first();

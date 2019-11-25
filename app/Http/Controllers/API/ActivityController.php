@@ -41,6 +41,7 @@ class ActivityController extends Controller
         if($type==1)
         {
         		$user_id=Auth::user()->id;
+
 		        $newresult=[];
 		        $newresult2=[];
 		        $member=Member::where('user_id',$user_id)->first();
@@ -56,10 +57,14 @@ class ActivityController extends Controller
 		                ->where('visitor.flat_id',$flat_id)
 		                ->where('visitor.user_id',$user_id)
 		                ->where('visitor.soft_delete',0)
-		                ->whereDate('visitor.created_at',$today)
-          				->orWhereDate('visitor.created_at',$yesterday)
-		                ->orderby('visitor.id','desc')
+		                ->where(function($query) use ($today,$yesterday) {
+                				$query->whereDate('visitor.created_at',$today)
+                					  ->orwhereDate('visitor.created_at',$yesterday);
+            			})
+		                 ->orderby('visitor.id','desc')
 		                ->get();
+
+
 		        }
 		        else
 		        {
@@ -70,10 +75,13 @@ class ActivityController extends Controller
 		                ->where('visitor.flat_id',$flat_id)
 		                ->where('visitor.soft_delete',0)
 		                ->where('visitor.user_id',$member->family_user_id)
-		                ->whereDate('visitor.created_at',$today)
-          				->orWhereDate('visitor.created_at',$yesterday)
+          				->where(function($query) use ($today,$yesterday) {
+                			$query->whereDate('visitor.created_at',$today)
+                				   ->orwhereDate('visitor.created_at',$yesterday);
+            			})
 		                ->orderby('visitor.id','desc')
 		                ->get();
+		                
 		        }
 
 		        
@@ -142,11 +150,14 @@ class ActivityController extends Controller
 
 		        $frequentlyVisitor =  DB::table('inviteguest')
 		                    ->select('inviteguest.id','inviteguest.contact_name','inviteguest.code','inviteguest.user_id','inviteguest.created_at')
+		                    
 		                    ->where('inviteguest.user_id',$user_id)    
 		                    ->where('inviteguest.soft_delete',0) 
 		                    ->where('inviteguest.soft_delete',0) 
-		                    ->whereDate('inviteguest.created_at',$today)
-          					->orWhereDate('inviteguest.created_at',$yesterday) 
+          					->where(function($query) use ($today,$yesterday) {
+                				$query->whereDate('inviteguest.created_at',$today)
+                				   ->orwhereDate('inviteguest.created_at',$yesterday);
+            				})
 		                    ->get(); 
 		       
 
@@ -215,6 +226,7 @@ class ActivityController extends Controller
 		        }
 
 		        $result = array_merge($newresult, $newresult2);
+		        krsort($result);
 		        array_multisort($result,SORT_DESC);
         }
         if($type==0)
@@ -393,6 +405,7 @@ class ActivityController extends Controller
 		        }
 
 		        $result = array_merge($newresult, $newresult2);
+		        krsort($result);
 		        array_multisort($result,SORT_DESC);
         }
         

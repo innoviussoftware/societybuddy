@@ -28,6 +28,17 @@ Route::get('/', function () {
     
 })->name('index');
 
+Route::get('/logout', function () {
+  if (Auth::check())
+        {
+             return redirect('admin/dashboard');
+        } 
+        else
+        { 
+          return view('auth.login');
+        }
+    
+})->name('index');
 
 Route::get('/privacy-policy', function () {
     return view('privacy-policy');
@@ -273,5 +284,11 @@ Route::name('admin.')->prefix('admin')->middleware(['auth'])->group(function () 
     Route::get('/referral', 'Admin\CityController@referralindex')->middleware(['role:admin|sub_admin'])->middleware(['role:admin|sub_admin'])->name('referral.index');
 
    Route::get('/referral/array/', 'Admin\CityController@referralArray')->middleware(['role:admin|sub_admin'])->name('referral.referralarray');
+
+    Route::get('/view/{society_id}/notification/{id}', 'Admin\SocietyController@viewnotification')->name('member.viewnotification');
+
+    Route::get('/view/notification/{id}', 'Admin\SocietyController@viewreferralnotification')->name('referral.viewnotification');
+    //Domestic Helpers OutReportsEntry
+    Route::get('/societies/{society_id}/delete/reports/{type}/{id}', 'Admin\SocietyController@domestichelperoutreports')->middleware(['role:admin|sub_admin|society_admin'])->name('societies.reports.out');
 
 });

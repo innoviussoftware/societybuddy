@@ -23,8 +23,10 @@ use App\Visitor;
 use App\Guard;
 use App\Settings;
 use App\DomesticHelpers;
-
+use App\Notification;
+use App\Referral;
 use App\Helpers\Notification\Otp;
+use App\Helpers\Notification\FamilyMember;
 class SocietyController extends Controller
 {
     /**
@@ -32,6 +34,27 @@ class SocietyController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
+
+     public function viewnotification($society_id,$id) {
+        $society = Society::find($society_id);
+        
+        $booking = Notification::find($id);
+        $booking->isread = 1;
+        $booking->save();
+        
+        return view('admin.societies.members.index',["society" => $society]);
+    }
+
+    public function viewreferralnotification($id)
+    {
+        
+        $booking = Referral::find($id);
+        $booking->isread = 1;
+        $booking->save();
+        
+        return view('admin.referral.index');
+    }
+
     public function index(){
         return view('admin.societies.index');
     }
@@ -818,7 +841,9 @@ class SocietyController extends Controller
         }
         public function ArrayMembersVehicles(Request $request, $user_id){
             $response = [];
-            $sosieties = Vehicle::where("user_id",$user_id)->get();
+            //$sosieties = Vehicle::where("user_id",$user_id)->with('user')->get();
+            $familyMember=FamilyMember::getfamilyMemberList($user_id);
+            $sosieties = Vehicle::whereIn('user_id', $familyMember)->orderBy('id','desc')->with('user')->get();
             $user = User::find($user_id);
             foreach ($sosieties as $s) {
                 $sub = [];
@@ -827,9 +852,9 @@ class SocietyController extends Controller
                 $sub[] = $s->type;
                 $sub[] = $s->number;
                 
-                $member_name=isset($user->name)?$user->name:'';
-                $building_name=isset($user->member->building->name)?$user->member->building->name:'';
-                $flat_name=isset($user->member->flat->name)?$user->member->flat->name:'';
+                $member_name=isset($s->user->name)?$s->user->name:'';
+                $building_name=isset($s->user->member->building->name)?$s->user->member->building->name:'';
+                $flat_name=isset($s->user->member->flat->name)?$s->user->member->flat->name:'';
                 $member=$member_name.'-'.$building_name.'-'.$flat_name;
                 
                 $delete_url = route('admin.societies.members.vehicles.delete',  $id);
@@ -1550,7 +1575,9 @@ class SocietyController extends Controller
 
     public function outreports($society_id,$type,$id)
     {
-        $sosieties = Inouts::where('type',$type)->where("id",$id)->update(['flag'=>2]);
+        $date=date("d-m-Y h:i A");
+
+        $sosieties = Inouts::where('type',$type)->where("id",$id)->update(['flag'=>2,'outtime'=>$date]);
 
         return redirect()->route('admin.societies.reports.index',$society_id)->with('success','Visitor out successfully.');
     } 
@@ -1651,12 +1678,32 @@ class SocietyController extends Controller
                           $sub[]=$guardname['name'];
                           $sub[]=$s['intime'];
                           $sub[]=$s['outtime'];
+                          if($s->flag=='1')
+                          {
+                              $action = '<div class="btn-part"><a class="edit" href="'.route('admin.societies.reports.out', ["society_id" => $society_id,"type" => $s->type, "request_id" => $id]).'">Out</a>' . '</div> ';
+                          }else
+                          {
+                              $action = '<div class="btn-part"></div> ';
+                          }
+                          
+                          $sub[] = $action;
                           $response[] = $sub;
       }
               
       $userjson = json_encode(["data" => $response]);
       echo $userjson;
     }
+
+    public function domestichelperoutreports($society_id,$type,$id)
+    {
+        $date=date("d-m-Y h:i A");
+        
+        
+
+        $sosieties = Inouts::where('type',$type)->where("id",$id)->update(['flag'=>2,'outtime'=>$date]);
+
+        return redirect()->route('admin.societies.helpers.index',$society_id)->with('success','DomesticHelpers out successfully.');
+    } 
 
 
 }

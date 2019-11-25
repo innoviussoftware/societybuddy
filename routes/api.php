@@ -65,6 +65,8 @@ Route::namespace('API')->group(function () {
 
     Route::post('sendref','SocietyController@send_reffreal');
 
+    Route::post('verifyvehical','GuardController@verifyvehical');
+
 
 });
 
