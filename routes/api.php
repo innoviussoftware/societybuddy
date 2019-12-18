@@ -67,6 +67,8 @@ Route::namespace('API')->group(function () {
 
     Route::post('verifyvehical','GuardController@verifyvehical');
 
+    Route::get('categorieslist','SocietyController@getCategories');
+
 
 });
 
@@ -129,6 +131,16 @@ Route::middleware('auth:api')->prefix('user')->namespace('API')->group(function 
     Route::post('reminder', 'NoticeController@remainderNotification');
 
     Route::post('buildingmember', 'SocietyController@MemberList');    
+
+    Route::post('addproduct', 'SocietyController@AddProduct');     
+    Route::post('editproduct', 'SocietyController@editProducts');
+    Route::post('getproduct', 'SocietyController@getProduct');
+    Route::post('deleteproduct', 'SocietyController@deleteProducts');
+    Route::post('deleteproductimages', 'SocietyController@deleteProductsImages');        
+    Route::post('relatedproduct', 'SocietyController@RelatedProduct');
+
+    Route::get('pollslist','SocietyController@pollslist');
+    Route::post('pollsresult','SocietyController@pollsanswer');
 
 });
 

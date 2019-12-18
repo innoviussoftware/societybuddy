@@ -130,55 +130,66 @@ class GuardController extends Controller
 
         $Settings=DB::table('settings')->where('user_id',$user_id)->orderBy('id','desc')->first();
 
-        $token=[];
+        if($Settings->mute_notification_status==1)
+        {
+            $token=[];
         
-        $receiver_id=explode(',', $Settings->receiver_id);
-         
-            foreach ($receiver_id as $value) {
+            $receiver_id=explode(',', $Settings->receiver_id);
+             
+                foreach ($receiver_id as $value) {
 
-                    $DeviceId=User::where('id',$value)->first();
-                   
-                    $token[]=isset($DeviceId->fcm_token)?$DeviceId->fcm_token:'';
-            }
-        
-        
+                        $DeviceId=User::where('id',$value)->first();
+                       
+                        $token[]=isset($DeviceId->fcm_token)?$DeviceId->fcm_token:'';
+                }
+            
+            
 
-        $membername=[];
-        $membername=isset($username->name)?$username->name:'';
-        $visitor->membername=$membername;
-
-
-        $DeviceId=User::where('id',isset($user_id)?$user_id:'')->first();
-
-        $newtoken=$token;
-        
-        $societyName=Society::where('id',$society_id)->first();
-
-        $buildingName=Building::where('id',$building_id)->first();
-
-        $flatName=Flat::where('id',$flat_id)->first();
-
-        $pmsg = array(
-                'body' => 'Security alert',
-                'title' => isset($societyName->name)?$societyName->name:'',
-                'icon' => 'myicon',
-                'sound' => 'audio.mp3'
-        );
-
-        $data=array(
-            'notification_type'=>'security',
-            'guest_name'=>$guest_name,
-            'guest_image'=>isset($visitorprofile)?$visitorprofile:'',
-            'flat_no'=>isset($flatName->name)?$flatName->name:'',
-            'building_no'=>isset($buildingName->name)?$buildingName->name:'',
-            'socity_name'=>isset($societyName->name)?$societyName->name:'',
-            'guest_id'=>$insertedId
-        );
+            $membername=[];
+            $membername=isset($username->name)?$username->name:'';
+            $visitor->membername=$membername;
 
 
-        PushNotification::SendPushNotification($pmsg, $data, $newtoken);
+            $DeviceId=User::where('id',isset($user_id)?$user_id:'')->first();
 
-        return response()->json(['data' => $visitor,'status'=>1,'message' => "Visitor added."] , 200);        
+            $newtoken=$token;
+            
+            $societyName=Society::where('id',$society_id)->first();
+
+            $buildingName=Building::where('id',$building_id)->first();
+
+            $flatName=Flat::where('id',$flat_id)->first();
+
+            $pmsg = array(
+                    'body' => 'Security alert',
+                    'title' => isset($societyName->name)?$societyName->name:'',
+                    'icon' => 'myicon',
+                    'sound' => 'audio.mp3'
+            );
+
+            $data=array(
+                'notification_type'=>'security',
+                'guest_name'=>$guest_name,
+                'guest_image'=>isset($visitorprofile)?$visitorprofile:'',
+                'flat_no'=>isset($flatName->name)?$flatName->name:'',
+                'building_no'=>isset($buildingName->name)?$buildingName->name:'',
+                'socity_name'=>isset($societyName->name)?$societyName->name:'',
+                'guest_id'=>$insertedId
+            );
+
+
+            PushNotification::SendPushNotification($pmsg, $data, $newtoken);
+
+            return response()->json(['data' => $visitor,'status'=>1,'message' => "Visitor added."] , 200);
+        }
+        else
+        {
+            $reason=$Settings->reason_to_mute_notification;
+            
+            return response()->json(['data' => $visitor,'status'=>2,'message' =>  $reason] , 200);
+        }
+
+                
     }
 
     public function acceptorreject(Request $request)
@@ -325,6 +336,7 @@ class GuardController extends Controller
                     ->join('flats','flats.id','=','visitor.flat_id')
                     ->join('buildings','buildings.id','=','visitor.building_id')
                     ->where('visitor.flag',1)
+                    ->where('visitor.society_id',$society_id)
                     //->where('visitor.guard_id',$guard_id)
                     ->where('visitor.inOutFlag','!=',2)
                     ->where('visitor.soft_delete',0)
@@ -598,11 +610,11 @@ class GuardController extends Controller
                                         
                                         if(isset($new_url))
                                         {
-                                             $otp_new = ucfirst($userName).' has invited you to '.$society_name.'.'.PHP_EOL.'Security code:'.$code.PHP_EOL.'Visit date and time: '.$start_date.' at '.request('time').PHP_EOL.'Location: '.$new_url.'';
+                                             $otp_new = ucfirst($userName).' has invited you to '.$society_name.'.'.PHP_EOL.'Security code:'.$code.PHP_EOL.'Visit date : '.$start_date.' at '.request('time').PHP_EOL.'Location: '.$new_url.'';
                                         }
                                         else
                                         {
-                                             $otp_new = ucfirst($userName).' has invited you to '.$society_name.'.'.PHP_EOL.'Security code:'.$code.PHP_EOL.'Visit date and time: '.$start_date.' at '.request('time').PHP_EOL.'';
+                                             $otp_new = ucfirst($userName).' has invited you to '.$society_name.'.'.PHP_EOL.'Security code:'.$code.PHP_EOL.'Visit date : '.$start_date.' at '.request('time').PHP_EOL.'';
                                         }
                                        
                                         
@@ -614,11 +626,11 @@ class GuardController extends Controller
                                         $nn=str_replace(' ', '', $number);
                                          if(isset($new_url))
                                         {
-                                            $otp_new = ucfirst($userName).' has invited you to '.$society_name.'.'.PHP_EOL.'Security code:'.$code.PHP_EOL.'Visit date and time: '.$start_date.' at '.request('time').PHP_EOL.'Location: '.$new_url.'';
+                                            $otp_new = ucfirst($userName).' has invited you to '.$society_name.'.'.PHP_EOL.'Security code:'.$code.PHP_EOL.'Visit date: '.$start_date.' at '.request('time').PHP_EOL.'Location: '.$new_url.'';
                                         }
                                         else
                                         {
-                                            $otp_new = ucfirst($userName).' has invited you to '.$society_name.'.'.PHP_EOL.'Security code:'.$code.PHP_EOL.'Visit date and time: '.$start_date.' at '.request('time').PHP_EOL.'';
+                                            $otp_new = ucfirst($userName).' has invited you to '.$society_name.'.'.PHP_EOL.'Security code:'.$code.PHP_EOL.'Visit date : '.$start_date.' at '.request('time').PHP_EOL.'';
                                         }
 
 
@@ -680,11 +692,11 @@ class GuardController extends Controller
 
                                          if(isset($new_url))
                                         {
-                                            $otp_new = ucfirst($userName).' has invited you to '.$society_name.'.'.PHP_EOL.'Security code:'.$code.PHP_EOL.'Visit date and time: '.$start_date.' and '.$end_date.PHP_EOL.'Location: '.$new_url.'';
+                                            $otp_new = ucfirst($userName).' has invited you to '.$society_name.'.'.PHP_EOL.'Security code:'.$code.PHP_EOL.'Visit date : '.$start_date.' to '.$end_date.PHP_EOL.'Location: '.$new_url.'';
                                         }
                                         else
                                         {
-                                             $otp_new = ucfirst($userName).' has invited you to '.$society_name.'.'.PHP_EOL.'Security code:'.$code.PHP_EOL.'Visit date and time: '.$start_date.' and '.$end_date.PHP_EOL.'';
+                                             $otp_new = ucfirst($userName).' has invited you to '.$society_name.'.'.PHP_EOL.'Security code:'.$code.PHP_EOL.'Visit date : '.$start_date.' to '.$end_date.PHP_EOL.'';
                                         }
 
                                         Otp::send_otp($nn,$otp_new);
@@ -698,11 +710,11 @@ class GuardController extends Controller
                                         
                                         if(isset($new_url))
                                         {
-                                            $otp_new = ucfirst($userName).' has invited you to '.$society_name.'.'.PHP_EOL.'Security code:'.$code.PHP_EOL.'Visit date and time: '.$start_date.' to '.$end_date.PHP_EOL.'Location: '.$new_url.'';
+                                            $otp_new = ucfirst($userName).' has invited you to '.$society_name.'.'.PHP_EOL.'Security code:'.$code.PHP_EOL.'Visit date : '.$start_date.' to '.$end_date.PHP_EOL.'Location: '.$new_url.'';
                                         }
                                         else
                                         {
-                                             $otp_new = ucfirst($userName).' has invited you to '.$society_name.'.'.PHP_EOL.'Security code:'.$code.PHP_EOL.'Visit date and time: '.$start_date.' to '.$end_date.PHP_EOL.'';
+                                             $otp_new = ucfirst($userName).' has invited you to '.$society_name.'.'.PHP_EOL.'Security code:'.$code.PHP_EOL.'Visit date : '.$start_date.' to '.$end_date.PHP_EOL.'';
                                         }
                                         Otp::send_otp($nn,$otp_new);
                                     }
@@ -719,14 +731,20 @@ class GuardController extends Controller
     {
         $guard_id=request('guard_id');
 
+
+        $society=Guard::where('id',$guard_id)->first();
+
+        $society_id=isset($society->society_id)?$society->society_id:'';
+
         $Visitor= DB::table('visitor')
           ->select('visitor.id','visitor.name','visitor.photos','flats.name as flatname','buildings.name as buildingname','visitor.flag','visitor.created_at')
           ->join('flats','flats.id','=','visitor.flat_id')
           ->join('buildings','buildings.id','=','visitor.building_id')
           //->where('visitor.guard_id',$guard_id)
+          ->where('visitor.society_id',$society_id)
           ->orderby('visitor.id','desc')
           ->get();
-
+          
         $data = [];
         $p = 0;
 
@@ -942,7 +960,12 @@ class GuardController extends Controller
             {
                 $Settings->family_details=(int)request('family_details');
             }
-
+            if(request('mute_notification_status')){
+                $Settings->mute_notification_status=(int)request('mute_notification_status');
+            }
+            if(request('reason_to_mute_notification')){
+                $Settings->reason_to_mute_notification=request('reason_to_mute_notification');
+            }
             $Settings->save();
             $Settings=Settings::where('user_id',$userId)->first();
 
@@ -997,6 +1020,8 @@ class GuardController extends Controller
             $visitor->circular=request('circular');
             $visitor->contact_details=request('contact_details');
             $visitor->family_details=request('family_details');
+            $visitor->mute_notification_status=request('mute_notification_status');
+            $visitor->reason_to_mute_notification=request('reason_to_mute_notification');
             $visitor->save();
 
             return response()->json(['data' =>$visitor,'status'=>1,'message' => "Settings Added Successfully."] , 200);
@@ -1220,6 +1245,7 @@ class GuardController extends Controller
             "building_id"=>$u->building_id,
             "flat_id"=>$u->flat_id,
             "flatType"=>$u->flatType,
+            "occupancy"=>$u->occupancy,
             "gender"=>$u->gender,
             "profession"=>$u->profession,
             "profession_detail"=>$u->profession_detail,
@@ -1232,7 +1258,7 @@ class GuardController extends Controller
             "image" => $u->user->image,
             "flatname" => $u->flat->name,
             "buildingname" => $u->building->name,
-            "role"=>$u->user->roles->first()->name,
+            "role"=>isset($u->user->roles->first()->name)?$u->user->roles->first()->name:'',
             "profession" => $u->profession,
             "relation" => $u->relation,
             "dob" => $u->dob,
@@ -1255,12 +1281,15 @@ class GuardController extends Controller
 
         $today=date("Y-m-d");
         
+        $society=Guard::where('id',$guard_id)->first();
+
+        $society_id=isset($society->society_id)?$society->society_id:'';
 
         $Visitor= DB::table('visitor')
           ->select('visitor.id','visitor.name','visitor.photos','flats.name as flatname','buildings.name as buildingname','visitor.flag','visitor.created_at')
           ->join('flats','flats.id','=','visitor.flat_id')
           ->join('buildings','buildings.id','=','visitor.building_id')
-         // ->where('visitor.guard_id',$guard_id)
+          ->where('visitor.society_id',$society_id)
           ->whereDate('visitor.created_at',$today)
           ->orWhereDate('visitor.created_at',$yesterday)
           ->orderby('visitor.id','desc')

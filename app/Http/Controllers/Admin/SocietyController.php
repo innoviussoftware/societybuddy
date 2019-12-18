@@ -25,6 +25,7 @@ use App\Settings;
 use App\DomesticHelpers;
 use App\Notification;
 use App\Referral;
+use App\Polls;
 use App\Helpers\Notification\Otp;
 use App\Helpers\Notification\FamilyMember;
 class SocietyController extends Controller
@@ -255,7 +256,7 @@ class SocietyController extends Controller
             'building_id' => 'required',
             'flat_id' => 'required',
             'name' => 'required',
-            'email' => 'required|email|unique:users',
+            //'email' => 'required|email|unique:users',
             'phone' => 'required|min:9 | max:13 | unique:users,phone',
             'roles' => 'required',
         ]);
@@ -1698,12 +1699,136 @@ class SocietyController extends Controller
     {
         $date=date("d-m-Y h:i A");
         
-        
-
         $sosieties = Inouts::where('type',$type)->where("id",$id)->update(['flag'=>2,'outtime'=>$date]);
 
         return redirect()->route('admin.societies.helpers.index',$society_id)->with('success','DomesticHelpers out successfully.');
     } 
+
+    public function indexPolls($id)
+    {
+        $society = Society::find($id);
+        if($society){
+          return view('admin.societies.polls.index',["society" => $society]);
+        }else{
+          return view('admin.errors.404');
+        }
+    }
+
+    public function Arraypolls(Request $request, $society_id)
+    {
+            $response = [];
+            $sosieties = Polls::where("society_id",$society_id)->get();
+
+            foreach ($sosieties as $s) {
+
+                $sub = [];
+                $id = $s->id;
+                $sub[] = $id;
+                $sub[] = $s->question;
+                $sub[] = $s->a1;
+                $sub[] = isset($s->a2)?$s->a2:'-';
+                $sub[] = isset($s->a3)?$s->a3:'-';
+                $sub[] = isset($s->a4)?$s->a4:'-';
+                $sub[] = isset($s->expires_on)?$s->expires_on:'-';
+                if($s->active==1)
+                {
+                    $sub[] = '<label class="label label-success">Active</label></a>';
+                }
+                elseif($s->active==0)
+                {
+                    $sub[] = '<label class="label label-success">In-Active</label></a>';
+                }
+                $delete_url = route('admin.societies.polls.delete', ["society_id" => $society_id, "user_id" => $id]);
+
+                $action = '<div class="btn-part"><a class="edit" href="'.route('admin.societies.polls.edit', ["society_id" => $society_id, "user_id" => $id]).'"><i class="fa fa-pencil-square-o"></i></a>' . ' ';
+
+                $action .= '<a class="delete" onclick="return confirm(`Are you sure you want to delete this record?`)"  href="'.$delete_url.'"><i class="fa fa-trash"></i>&nbsp;</a></div>';
+                $sub[] = $action;
+                $response[] = $sub;
+              }
+            $userjson = json_encode(["data" => $response]);
+            echo $userjson;
+    }
+
+    public function addPolls($id)
+    {
+          $society = Society::find($id);
+          if($society){
+            return view('admin.societies.polls.add',["society" => $society]);
+          }else{
+            return view('admin.errors.404');
+          }
+    }
+
+    public function storePolls(Request $request, $society_id)
+    {
+        $this->validate($request, [
+            'question' => 'required',
+            'option1' => 'required',
+            'option2' => 'required',
+        ]);
+        $city = new Polls();
+        $city->question = request('question');
+        $city->society_id = $society_id;
+        $city->a1 = request('option1');
+        $city->a2 = request('option2');
+        $city->a3 = request('option3');
+        $city->a4 = request('option4');
+        $city->expires_on = request('expire');
+        $city->active = request('Status');
+
+        $city->save();
+
+        return redirect()->route('admin.societies.polls.index',$society_id)->with("success","Polls added successfully.");
+    }
+
+    public function editPolls($society_id,$building_id)
+    {
+        $this->checkForSocietyAdmin($society_id);
+        $society = Society::find($society_id);
+        $b = Polls::find($building_id);
+        if($b && $society){
+          return view('admin.societies.polls.edit',['society'=>$society,"building" => $b]);
+        }else{
+          return view('admin.errors.404');
+        }
+    }
+
+    public function updatePolls(Request $request, $society_id, $user_id)
+    {
+        $this->validate($request, [
+            'question' => 'required',
+            'option1' => 'required',
+            'option2' => 'required',
+        ]);
+        $user = Polls::find($user_id);
+        if($user){
+          
+          $user->question = request('question');
+          $user->society_id = $society_id;
+          $user->a1 = request('option1');
+          $user->a2 = request('option2');
+          $user->a3 = request('option3');
+          $user->a4 = request('option4');
+          $user->expires_on = request('expire');
+          $user->active = request('Status');
+          $user->save();
+
+        }
+        return redirect()->route('admin.societies.polls.index', $society_id)->with('success','Polls updated successfully.');
+    }
+
+    public function deletePolls($society_id,$member_id)
+    {
+        $member = Polls::find($member_id);
+
+        if($member){
+          //$city = Helpdesk::find($member->user_id);
+          $member->delete();
+        }
+        return redirect()->route('admin.societies.polls.index',$society_id)->with('success','Polls deleted successfully.');
+    }
+
 
 
 }

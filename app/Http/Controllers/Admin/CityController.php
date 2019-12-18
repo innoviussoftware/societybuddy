@@ -160,7 +160,7 @@ class CityController extends Controller
 
                 $user = User::find($referral['user_id']);
 
-                $society_id=Society::find($user->society_id);
+                $society_id=Society::find(isset($user->society_id)?$user->society_id:'');
 
                 $building_name=isset($user->member->building->name)?$user->member->building->name:'';
 

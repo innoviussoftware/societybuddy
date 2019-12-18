@@ -46,7 +46,7 @@
          </ul>
       </li>
       <li><a href="{{ route('admin.societies.helpdesk.index',auth()->user()->society_id) }}"><i class="fa fa-info-circle" aria-hidden="true"></i> Help desk</a></li>
-
+      <li><a href="{{ route('admin.societies.polls.index',auth()->user()->society_id) }}"><i class="fa fa-info-circle" aria-hidden="true"></i> Polls</a></li>
     </ul>
     @endrole
 
@@ -69,7 +69,7 @@
                   @foreach($notification as $b)
                   <li>
                     <a href="{{ route('admin.member.viewnotification',[auth()->user()->society_id,$b->id]) }}">
-                      <i class="fa fa-user"></i> {{$b->user->name}} have registered successfully 
+                      <i class="fa fa-user"></i> {{isset($b->user->name)?$b->user->name:''}} have registered successfully 
                     </a>
                   </li>
                   @endforeach

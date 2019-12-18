@@ -53,7 +53,7 @@ class CircularController extends Controller
       $this->validate($request, [
           'title' => 'required',
           'description' => 'required',
-          'pdf'=>'mimes:pdf,png,jpg'
+          'pdf'=>'mimes:pdf,png,jpeg'
       ]);
         $building_id=request('building_id');
 
@@ -153,7 +153,7 @@ class CircularController extends Controller
             'building_id' => 'required',
             'title' => 'required',
             'description' => 'required',    
-            'pdf'=>'mimes:pdf,png,jpg'
+            'pdf'=>'mimes:pdf,png,jpeg'
                  
         ]);
         $notice = Circular::find($member_id);

@@ -242,6 +242,23 @@ Route::name('admin.')->prefix('admin')->middleware(['auth'])->group(function () 
 
   Route::get('/societies/{society_id}/status/helpdesk/{user_id}/{status}', 'Admin\SocietyController@changestatus')->middleware(['role:admin|sub_admin|society_admin'])->name('societies.helpdesk.changestatus');
 
+//Polls
+
+  Route::get('/societies/{society_id}/polls', 'Admin\SocietyController@indexPolls')->middleware(['role:admin|sub_admin|society_admin'])->name('societies.polls.index');
+
+  Route::get('/societies/{society_id}/array/polls', 'Admin\SocietyController@Arraypolls')->middleware(['role:admin|sub_admin|society_admin'])->name('societies.polls');
+
+  Route::get('/societies/{society_id}/polls/add', 'Admin\SocietyController@addPolls')->middleware(['role:admin|sub_admin|society_admin'])->name('societies.polls.add');
+
+  Route::post('/societies/{society_id}/polls/store', 'Admin\SocietyController@storePolls')->middleware(['role:admin|sub_admin|society_admin'])->name('societies.polls.store');
+
+  Route::get('/societies/{society_id}/polls/edit/{member_id}', 'Admin\SocietyController@editPolls')->middleware(['role:admin|sub_admin|society_admin'])->name('societies.polls.edit');
+
+  Route::patch('/societies/{society_id}/polls/update/{member_id}', 'Admin\SocietyController@updatePolls')->middleware(['role:admin|sub_admin|society_admin'])->name('societies.polls.update');
+
+  Route::get('/societies/{society_id}/delete/polls/{user_id}', 'Admin\SocietyController@deletePolls')->middleware(['role:admin|sub_admin|society_admin'])->name('societies.polls.delete');
+
+  // Route::get('/societies/{society_id}/status/polls/{user_id}/{status}', 'Admin\SocietyController@changestatus')->middleware(['role:admin|sub_admin|society_admin'])->name('societies.polls.changestatus');
 ///Reports
 
   //Domestic Helpers

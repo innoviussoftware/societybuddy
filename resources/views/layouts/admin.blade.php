@@ -33,6 +33,7 @@
   <!-- Date Picker -->
   <link rel="stylesheet" href="{{ env('APP_URL') }}/admin_assets/bower_components/bootstrap-datepicker/dist/css/bootstrap-datepicker.min.css">
   <link rel="stylesheet" href="{{ env('APP_URL') }}/admin_assets/bower_components/timepicker/bootstrap-timepicker.min.css">
+  <link rel="stylesheet" href="{{ env('APP_URL') }}/admin_assets/bower_components/bootstrap-datetimepicker-master/css/bootstrap-datetimepicker.min.css">
 
   <!-- Daterange picker -->
   <!-- <link rel="stylesheet" href="{{ env('APP_URL') }}/admin_assets/bower_components/bootstrap-daterangepicker/daterangepicker.css"> -->
@@ -112,6 +113,7 @@
 <!-- datepicker -->
 <script src="{{ env('APP_URL') }}/admin_assets/bower_components/bootstrap-datepicker/dist/js/bootstrap-datepicker.min.js"></script>
 <script src="{{ env('APP_URL') }}/admin_assets/bower_components/timepicker/bootstrap-timepicker.min.js"></script>
+<script src="{{ env('APP_URL') }}/admin_assets/bower_components/bootstrap-datetimepicker-master/js/bootstrap-datetimepicker.min.js"></script>
 
 <!-- Bootstrap WYSIHTML5 -->
 <!-- <script src="{{ env('APP_URL') }}/admin_assets/plugins/bootstrap-wysihtml5/bootstrap3-wysihtml5.all.min.js"></script> -->

@@ -20,6 +20,7 @@ use App\Reviews;
 use App\Inouts;
 use App\Society;
 use App\Helpers\Notification\Otp;
+use App\Helpers\Notification\FamilyMemberList;
 use Carbon;
 
 class ActivityController extends Controller
@@ -45,17 +46,19 @@ class ActivityController extends Controller
 		        $newresult=[];
 		        $newresult2=[];
 		        $member=Member::where('user_id',$user_id)->first();
-
+		       // $familyMember=$this->getfamilyMember($user_id);
+		        $familyMember=FamilyMemberList::getfamilyMemberList($user_id);
+		        
 		        $flat_id=isset($member->flat_id)?$member->flat_id:'';
 
-		        if($member->family_user_id ==0)
-		        {
+		        // if($member->family_user_id ==0)
+		        // {
 		            $GuestList= DB::table('visitor')
 		                ->select('visitor.id','visitor.name','visitor.photos','flats.name as flatname','buildings.name as buildingname','visitor.flag','visitor.created_at')
 		                ->join('flats','flats.id','=','visitor.flat_id')
 		                ->join('buildings','buildings.id','=','visitor.building_id')
 		                ->where('visitor.flat_id',$flat_id)
-		                ->where('visitor.user_id',$user_id)
+		                ->whereIn('visitor.user_id',$familyMember)
 		                ->where('visitor.soft_delete',0)
 		                ->where(function($query) use ($today,$yesterday) {
                 				$query->whereDate('visitor.created_at',$today)
@@ -65,24 +68,24 @@ class ActivityController extends Controller
 		                ->get();
 
 
-		        }
-		        else
-		        {
-		              $GuestList= DB::table('visitor')
-		                ->select('visitor.id','visitor.name','visitor.photos','flats.name as flatname','buildings.name as buildingname','visitor.flag','visitor.created_at')
-		                ->join('flats','flats.id','=','visitor.flat_id')
-		                ->join('buildings','buildings.id','=','visitor.building_id')
-		                ->where('visitor.flat_id',$flat_id)
-		                ->where('visitor.soft_delete',0)
-		                ->where('visitor.user_id',$member->family_user_id)
-          				->where(function($query) use ($today,$yesterday) {
-                			$query->whereDate('visitor.created_at',$today)
-                				   ->orwhereDate('visitor.created_at',$yesterday);
-            			})
-		                ->orderby('visitor.id','desc')
-		                ->get();
+		        // }
+		        // else
+		        // {
+		            //   $GuestList= DB::table('visitor')
+		            //     ->select('visitor.id','visitor.name','visitor.photos','flats.name as flatname','buildings.name as buildingname','visitor.flag','visitor.created_at')
+		            //     ->join('flats','flats.id','=','visitor.flat_id')
+		            //     ->join('buildings','buildings.id','=','visitor.building_id')
+		            //     ->where('visitor.flat_id',$flat_id)
+		            //     ->where('visitor.soft_delete',0)
+		            //     ->where('visitor.user_id',$member->family_user_id)
+          				// ->where(function($query) use ($today,$yesterday) {
+              //   			$query->whereDate('visitor.created_at',$today)
+              //   				   ->orwhereDate('visitor.created_at',$yesterday);
+            		// 	})
+		            //     ->orderby('visitor.id','desc')
+		            //     ->get();
 		                
-		        }
+		        // }
 
 		        
 
@@ -147,11 +150,11 @@ class ActivityController extends Controller
 		        }
 
 		        $date=date("Y-m-d");
-
+		        $familyMember=FamilyMemberList::getfamilyMemberList($user_id);
 		        $frequentlyVisitor =  DB::table('inviteguest')
 		                    ->select('inviteguest.id','inviteguest.contact_name','inviteguest.code','inviteguest.user_id','inviteguest.created_at')
 		                    
-		                    ->where('inviteguest.user_id',$user_id)    
+		                    ->whereIn('inviteguest.user_id',$familyMember)    
 		                    ->where('inviteguest.soft_delete',0) 
 		                    ->where('inviteguest.soft_delete',0) 
           					->where(function($query) use ($today,$yesterday) {
@@ -237,36 +240,37 @@ class ActivityController extends Controller
         		$oneDate = date('Y-m-d', strtotime($Date. ' - 2 day'));
 		        $newresult=[];
 		        $newresult2=[];
+		        $familyMember=FamilyMemberList::getfamilyMemberList($user_id);
 		        $member=Member::where('user_id',$user_id)->first();
 
 		        $flat_id=isset($member->flat_id)?$member->flat_id:'';
 
-		        if($member->family_user_id ==0)
-		        {
+		        // if($member->family_user_id ==0)
+		        // {
 		            $GuestList= DB::table('visitor')
 		                ->select('visitor.id','visitor.name','visitor.photos','flats.name as flatname','buildings.name as buildingname','visitor.flag','visitor.created_at')
 		                ->join('flats','flats.id','=','visitor.flat_id')
 		                ->join('buildings','buildings.id','=','visitor.building_id')
 		                ->where('visitor.flat_id',$flat_id)
-		                ->where('visitor.user_id',$user_id)
+		                ->whereIn('visitor.user_id',$familyMember)
 		                ->where('visitor.soft_delete',0)
 		                ->whereBetween(DB::raw('DATE(visitor.created_at)'), array($fiftyday, $oneDate))
 		                ->orderby('visitor.id','desc')
 		                ->get();
-		        }
-		        else
-		        {
-		              $GuestList= DB::table('visitor')
-		                ->select('visitor.id','visitor.name','visitor.photos','flats.name as flatname','buildings.name as buildingname','visitor.flag','visitor.created_at')
-		                ->join('flats','flats.id','=','visitor.flat_id')
-		                ->join('buildings','buildings.id','=','visitor.building_id')
-		                ->where('visitor.flat_id',$flat_id)
-		                ->where('visitor.soft_delete',0)
-		                ->where('visitor.user_id',$member->family_user_id)
-		                ->whereBetween(DB::raw('DATE(visitor.created_at)'), array($fiftyday, $oneDate))
-		                ->orderby('visitor.id','desc')
-		                ->get();
-		        }
+		        // }
+		        // else
+		        // {
+		        //       $GuestList= DB::table('visitor')
+		        //         ->select('visitor.id','visitor.name','visitor.photos','flats.name as flatname','buildings.name as buildingname','visitor.flag','visitor.created_at')
+		        //         ->join('flats','flats.id','=','visitor.flat_id')
+		        //         ->join('buildings','buildings.id','=','visitor.building_id')
+		        //         ->where('visitor.flat_id',$flat_id)
+		        //         ->where('visitor.soft_delete',0)
+		        //         ->where('visitor.user_id',$member->family_user_id)
+		        //         ->whereBetween(DB::raw('DATE(visitor.created_at)'), array($fiftyday, $oneDate))
+		        //         ->orderby('visitor.id','desc')
+		        //         ->get();
+		        // }
 
 		        
 
@@ -331,10 +335,10 @@ class ActivityController extends Controller
 		        }
 
 		        $date=date("Y-m-d");
-
+		         $familyMember=FamilyMemberList::getfamilyMemberList($user_id);
 		        $frequentlyVisitor =  DB::table('inviteguest')
 		                    ->select('inviteguest.id','inviteguest.contact_name','inviteguest.code','inviteguest.user_id','inviteguest.created_at')
-		                    ->where('inviteguest.user_id',$user_id)    
+		                    ->whereIn('inviteguest.user_id',$familyMember)    
 		                    ->where('inviteguest.soft_delete',0) 
 		                  	->whereBetween(DB::raw('DATE(inviteguest.created_at)'), array($fiftyday, $oneDate))
 		                    ->get(); 

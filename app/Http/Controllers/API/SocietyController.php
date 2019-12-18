@@ -19,6 +19,13 @@ use App\Notification;
 use App\Referral;
 use Auth;
 use App\Settings;
+use App\Categories;
+use App\Products;
+use App\ProductsImages;
+use App\Polls;
+use Validator;
+use App\Helpers\Notification\FamilyMemberList;
+use Carbon\Carbon;
 class SocietyController extends Controller
 {
     //
@@ -285,6 +292,7 @@ class SocietyController extends Controller
             "building_id"=>$u->building_id,
             "flat_id"=>$u->flat_id,
             "flatType"=>$u->flatType,
+            "occupancy"=>$u->occupancy,
             "gender"=>$u->gender,
             "profession"=>$u->profession,
             "profession_detail"=>$u->profession_detail,
@@ -322,13 +330,1110 @@ class SocietyController extends Controller
         $ref->save();
 
         return response()->json(['data' =>$ref,'status'=>1,'message' => "Successfully Added Referral."] , 200);
+    }
+
+    public function getCategories(Request $request)
+    {
+
+        $cat=Categories::all();
+
+        return response()->json(['data' =>$cat,'status'=>1,'message' => "Categories Get Successfully"] , 200);
 
     }
-    
 
-    
+    public function AddProduct(Request $request)
+    {
+            $validator = Validator::make($request->all(),[
+                   'title'  => 'required',
+                   'price'  => 'required',
+                   'description' => 'required',
+            ]);
 
-    
-    
-    
+            if ($validator->fails()) {
+                $errorMessage = implode(',', $validator->errors()->all());
+                return response()->json(['data' =>(Object)[],'status'=>0,'message' => $errorMessage] , 200);
+            }else
+            {
+                $user_id=auth()->user()->id;
+                $pro=new Products;
+                $pro->user_id=$user_id;
+                $pro->society_id=request('society_id');
+                $pro->category_id=request('category_id');
+                $pro->title=request('title');
+                $pro->price=request('price');
+                $pro->description=request('description');
+                $pro->quality=request('quality');
+                $pro->flag=2;
+                $pro->save();
+
+                if(request('product_photos'))
+                {
+                    $file=request('product_photos');
+                    foreach ($file as $value) {
+                        $path = $value->store('product_photos');
+                        $proim=new ProductsImages;
+                        $proim->product_id=$pro->id;
+                        $proim->image=$path;
+                        $proim->save();
+                    }
+                }
+                $pro->productsimages;
+                return response()->json(['data' =>$pro,'status'=>1,'message' => "Successfully Added Product."] , 200);
+            }
+    }
+
+    public function getProduct(Request $request)
+    {
+        $user_id=auth()->user()->id;
+
+        $familyMember=FamilyMemberList::getfamilyMemberList($user_id);
+        
+        $type=request('type');
+
+        if($type==1)//Buy
+        {
+                $category_id=request('category_id');
+
+                if($category_id==0)
+                {
+                    $pro=Products::whereNotIn('user_id',$familyMember)->where('society_id',request('society_id'))->with('user','categories','productsimages')->get();
+
+                }
+                else
+                {   
+                    $pro=Products::whereNotIn('user_id',$familyMember)->where('society_id',request('society_id'))->where('category_id',$category_id)->with('user','categories','productsimages')->get();
+                }
+                
+
+                $response = [];
+
+                foreach ($pro as $u) {
+                        $buildingname=isset($u->user->member->building->name)?$u->user->member->building->name:'';
+                        $flatname=isset($u->user->member->flat->name)?$u->user->member->flat->name:'';
+                        $response[] = [
+                            "id" => $u->id,
+                            "user_id"=>$u->user_id,
+                            "category_id"=>$u->category_id,
+                            "society_id"=>$u->society_id,
+                            "title"=>$u->title,
+                            "price"=>$u->price,
+                            "quality"=>$u->quality,
+                            "description"=>$u->description,
+                            "flag"=>$u->flag,
+                            "username"=>isset($u->user->name)?$u->user->name:'',
+                            "buildingname"=>$buildingname.'-'.$flatname,
+                            "phone"=>isset($u->user->phone)?$u->user->phone:'',
+                            "image"=>isset($u->user->image)?$u->user->image:'',
+                            "categoryname"=>isset($u->categories->name)?$u->categories->name:'',
+                            "productsimages"=>isset($u->productsimages)?$u->productsimages:''
+                        ];
+                }
+                return response()->json(['data' =>$response,'status'=>1,'message' => "Successfully Get Product."] , 200);
+        }
+
+        if($type==2)//Sell
+        {
+                $category_id=request('category_id');
+
+                if($category_id==0)
+                {
+                    $pro=Products::whereIn('user_id',$familyMember)->where('society_id',request('society_id'))->with('user','categories','productsimages')->get();
+                }
+                else
+                {
+                    $pro=Products::whereIn('user_id',$familyMember)->where('society_id',request('society_id'))->where('category_id',$category_id)->with('user','categories','productsimages')->get();
+                }
+                
+
+                $response = [];
+
+                foreach ($pro as $u) {
+                        $buildingname=isset($u->user->member->building->name)?$u->user->member->building->name:'';
+                        $flatname=isset($u->user->member->flat->name)?$u->user->member->flat->name:'';
+                        $response[] = [
+                            "id" => $u->id,
+                            "user_id"=>$u->user_id,
+                            "category_id"=>$u->category_id,
+                            "society_id"=>$u->society_id,
+                            "title"=>$u->title,
+                            "price"=>$u->price,
+                            "quality"=>$u->quality,
+                            "description"=>$u->description,
+                            "flag"=>$u->flag,
+                            "username"=>$u->user->name,
+                            "buildingname"=>$buildingname.'-'.$flatname,
+                            "phone"=>$u->user->phone,
+                            "image"=>$u->user->image,
+                            "categoryname"=>$u->categories->name,
+                            "productsimages"=>$u->productsimages
+                        ];
+                }
+                return response()->json(['data' =>$response,'status'=>1,'message' => "Successfully Get Product."] , 200);
+        }
+        
+    }
+
+    public function editProducts(Request $request)
+    {
+         $validator = Validator::make($request->all(),[
+                   'title'  => 'required',
+                   'price'  => 'required',
+                   'description' => 'required',
+            ]);
+
+            if ($validator->fails()) {
+                $errorMessage = implode(',', $validator->errors()->all());
+                return response()->json(['data' =>(Object)[],'status'=>0,'message' => $errorMessage] , 200);
+            }else
+            {
+                $user_id=auth()->user()->id;
+
+                $id=request('product_id');
+
+                $pro=Products::find($id);
+                $pro->user_id=$user_id;
+                $pro->society_id=request('society_id');
+                $pro->category_id=request('category_id');
+                $pro->title=request('title');
+                $pro->price=request('price');
+                $pro->description=request('description');
+                $pro->quality=request('quality');
+                $pro->flag=2;
+                $pro->save();
+
+                if(request('product_photos'))
+                {
+                    $file=request('product_photos');
+                    foreach ($file as $value) {
+                        $path = $value->store('product_photos');
+                        $proim=new ProductsImages;
+                        $proim->product_id=$pro->id;
+                        $proim->image=$path;
+                        $proim->save();
+                    }
+                }
+                $pro->productsimages;
+                return response()->json(['data' =>$pro,'status'=>1,'message' => "Successfully Added Product."] , 200);
+            }
+    }
+
+    public function deleteProducts(Request $request)
+    {
+        $id=request('id');
+
+        $products=Products::where('id',$id)->delete();
+
+        $productsimages=ProductsImages::where('product_id',$id)->delete();
+
+        return response()->json(['data' =>[],'status'=>1,'message' => "Successfully Deleted Product."] , 200);
+    }
+
+    public function deleteProductsImages(Request $request)
+    {
+        $id=request('id');
+
+        $products=ProductsImages::where('id',$id)->delete();
+
+        return response()->json(['data' =>[],'status'=>1,'message' => "Successfully Deleted Productimages."] , 200);
+    }
+
+    public function RelatedProduct(Request $request)
+    {
+        $category_id=request('category_id');
+
+        $product_id=request('product_id');
+        
+        $user_id=auth()->user()->id;
+
+        $familyMember=FamilyMemberList::getfamilyMemberList($user_id);
+
+        $products=Products::whereNotIn('user_id',$familyMember)->where('society_id',request('society_id'))->where('id','!=',$product_id)->where('category_id',$category_id)->with('user','categories','productsimages')->get();
+
+        $response = [];
+
+                foreach ($products as $u) {
+                        $buildingname=isset($u->user->member->building->name)?$u->user->member->building->name:'';
+                        $flatname=isset($u->user->member->flat->name)?$u->user->member->flat->name:'';
+                        $response[] = [
+                            "id" => $u->id,
+                            "user_id"=>$u->user_id,
+                            "category_id"=>$u->category_id,
+                            "title"=>$u->title,
+                            "price"=>$u->price,
+                            "quality"=>$u->quality,
+                            "description"=>$u->description,
+                            "flag"=>$u->flag,
+                            "username"=>$u->user->name,
+                            "buildingname"=>$buildingname.'-'.$flatname,
+                            "phone"=>$u->user->phone,
+                            "image"=>$u->user->image,
+                            "categoryname"=>$u->categories->name,
+                            "productsimages"=>$u->productsimages
+                        ];
+                }
+
+        return response()->json(['data' =>$response,'status'=>1,'message' => "Successfully Get Related Product."] , 200);
+    }
+
+    public function pollslist(Request $request)
+    {
+
+        $user_id=auth()->user()->society_id;           
+
+        $polls=Polls::where('expires_on','>=',Carbon::now())->where('society_id',$user_id)->where('active',1)->get();
+
+        $response = [];
+
+              foreach ($polls as $u) {
+                $date=date('Y-m-d H:i:s');
+                if($u->expires_on == $date)
+                {
+                    Polls::where('id',$u->id)->update(['active'=>0]);
+                }
+                if($u->a1_userid !=null)
+                {
+                    $result1 = count(explode(',',$u->a1_userid));    
+                }
+                else
+                {
+                    $result1 =0;
+                }
+                if($u->a2_userid !=null)
+                {
+                    $result2 = count(explode(',',$u->a2_userid));    
+                }
+                else
+                {
+                    $result2 =0;
+                }
+                if($u->a3_userid !=null)
+                {
+                    $result3 = count(explode(',',$u->a3_userid));    
+                }else
+                {
+                    $result3 =0;
+                }
+                if($u->a4_userid !=null)
+                {
+                    $result4 = count(explode(',',$u->a4_userid));    
+                }else
+                {
+                    $result4 =0;
+                }
+                
+                $totalcount=$result1+$result2+$result3+$result4;
+                if($result1 >0)
+                {
+                    $per=(100 * $result1) / $totalcount;    
+                }
+                else
+                {
+                    $per=(int)'';
+                }
+                if($result2 >0)
+                {
+                    $per2=(100 * $result2) / $totalcount;    
+                }
+                else
+                {
+                    $per2=(int)'';
+                }
+                if($result3 >0)
+                {
+                    $per3=(100 * $result3) / $totalcount;    
+                }
+                else
+                {
+                    $per3=(int)'';
+                }
+
+                 if($result4 >0)
+                {
+                    $per4=(100 * $result4) / $totalcount;    
+                }
+                else
+                {
+                    $per4=(int)'';
+                }
+                
+                
+                      $response[] = [
+                        "id" => $u->id,
+                        "society_id" => $u->society_id,
+                        "question" => $u->question,
+                        "a1" => $u->a1,
+                        "a2" => $u->a2,
+                        "a3" => $u->a3,
+                        "a4" => $u->a4,
+                        "a1_userid" => $u->a1_userid,
+                        "a2_userid" => $u->a2_userid,
+                        "a3_userid" => $u->a3_userid,
+                        "a4_userid" => $u->a4_userid,
+                        "expires_on" => $u->expires_on,
+                        "active" => $u->active,
+                        "created_at" => $u->created_at->toDateTimeString(),
+                        "updated_at" => $u->updated_at->toDateTimeString(),
+                        "percentage1"=>floor($per),
+                        "percentage2" => floor($per2),
+                        "percentage3" => floor($per3),
+                        "percentage4" => floor($per4)
+                      ];
+              }
+
+        return response()->json(['data' =>$response,'status'=>1,'message' => "Successfully Get Polls."] , 200);
+    }
+
+    public function pollsanswer(Request $request)
+    {
+        $user_id=auth()->user()->id;
+
+        $id=request('id'); //Id
+
+        $options=request('options'); // 1-Option 2-Option 3-Option 4-Option
+
+        $type=request('type'); // 1-select 2-deselect
+
+        if($type==1)
+        {
+            if($options==1){
+                $polls=Polls::where('id',$id)->first();
+                
+                if($polls->a1_userid == null)
+                {
+                    $parts = explode(',', $user_id);
+                    $roll=implode(',', $parts);
+                }
+                else
+                {
+                    $parts = explode(',', $polls->a1_userid);
+                    if (in_array($user_id, $parts))
+                    {
+                        $roll=implode(',', $parts);    
+                    }
+                    else
+                    {
+                        $parts[]=$user_id;
+                        $roll=implode(',', $parts);    
+                    }
+                    
+                }
+                Polls::where('id',$id)->update(['a1_userid'=>$roll]);
+
+                $polls=Polls::where('id',$id)->first();
+
+                if($polls->a1_userid !=null)
+                {
+                    $result1 = count(explode(',',$polls->a1_userid));    
+                }
+                else
+                {
+                    $result1 =0;
+                }
+                if($polls->a2_userid !=null)
+                {
+                    $result2 = count(explode(',',$polls->a2_userid));    
+                }
+                else
+                {
+                    $result2 =0;
+                }
+                if($polls->a3_userid !=null)
+                {
+                    $result3 = count(explode(',',$polls->a3_userid));    
+                }else
+                {
+                    $result3 =0;
+                }
+                if($polls->a4_userid !=null)
+                {
+                    $result4 = count(explode(',',$polls->a4_userid));    
+                }else
+                {
+                    $result4 =0;
+                }
+                
+                $totalcount=$result1+$result2+$result3+$result4;
+                if($result1 >0)
+                {
+                    $per=(100 * $result1) / $totalcount;    
+                }
+                else
+                {
+                    $per=(int)'';
+                }
+                if($result2 >0)
+                {
+                    $per2=(100 * $result2) / $totalcount;    
+                }
+                else
+                {
+                    $per2=(int)'';
+                }
+                if($result3 >0)
+                {
+                    $per3=(100 * $result3) / $totalcount;    
+                }
+                else
+                {
+                    $per3=(int)'';
+                }
+
+                 if($result4 >0)
+                {
+                    $per4=(100 * $result4) / $totalcount;    
+                }
+                else
+                {
+                    $per4=(int)'';
+                }
+                $polls->percentage1=floor($per);
+                $polls->percentage2=floor($per2);
+                $polls->percentage3=floor($per3);
+                $polls->percentage4=floor($per4);
+            }
+
+            if($options==2){
+                $polls=Polls::where('id',$id)->first();
+                if($polls->a2_userid == null)
+                {
+                    $parts = explode(',', $user_id);
+                    $roll=implode(',', $parts);
+                }
+                else
+                {
+                    $parts = explode(',', $polls->a2_userid);
+                    if (in_array($user_id, $parts))
+                    {
+                        $roll=implode(',', $parts);    
+                    }
+                    else
+                    {
+                        $parts[]=$user_id;
+                        $roll=implode(',', $parts);    
+                    }
+                    
+                }
+                Polls::where('id',$id)->update(['a2_userid'=>$roll]);
+                $polls=Polls::where('id',$id)->first();
+                if($polls->a1_userid !=null)
+                {
+                    $result1 = count(explode(',',$polls->a1_userid));    
+                }
+                else
+                {
+                    $result1 =0;
+                }
+                if($polls->a2_userid !=null)
+                {
+                    $result2 = count(explode(',',$polls->a2_userid));    
+                }
+                else
+                {
+                    $result2 =0;
+                }
+                if($polls->a3_userid !=null)
+                {
+                    $result3 = count(explode(',',$polls->a3_userid));    
+                }else
+                {
+                    $result3 =0;
+                }
+                if($polls->a4_userid !=null)
+                {
+                    $result4 = count(explode(',',$polls->a4_userid));    
+                }else
+                {
+                    $result4 =0;
+                }
+                
+                $totalcount=$result1+$result2+$result3+$result4;
+               if($result1 >0)
+                {
+                    $per=(100 * $result1) / $totalcount;    
+                }
+                else
+                {
+                    $per=(int)'';
+                }
+                if($result2 >0)
+                {
+                    $per2=(100 * $result2) / $totalcount;    
+                }
+                else
+                {
+                    $per2=(int)'';
+                }
+                if($result3 >0)
+                {
+                    $per3=(100 * $result3) / $totalcount;    
+                }
+                else
+                {
+                    $per3=(int)'';
+                }
+
+                 if($result4 >0)
+                {
+                    $per4=(100 * $result4) / $totalcount;    
+                }
+                else
+                {
+                    $per4=(int)'';
+                }
+                $polls->percentage1=floor($per);
+                $polls->percentage2=floor($per2);
+                $polls->percentage3=floor($per3);
+                $polls->percentage4=floor($per4);
+            }
+
+            if($options==3){
+                $polls=Polls::where('id',$id)->first();
+                if($polls->a3_userid == null)
+                {
+                    $parts = explode(',', $user_id);
+                    $roll=implode(',', $parts);
+                }
+                else
+                {
+                    $parts = explode(',', $polls->a3_userid);
+                    if (in_array($user_id, $parts))
+                    {
+                        $roll=implode(',', $parts);    
+                    }
+                    else
+                    {
+                        $parts[]=$user_id;
+                        $roll=implode(',', $parts);    
+                    }
+                }
+                Polls::where('id',$id)->update(['a3_userid'=>$roll]);
+                $polls=Polls::where('id',$id)->first();
+               if($polls->a1_userid !=null)
+                {
+                    $result1 = count(explode(',',$polls->a1_userid));    
+                }
+                else
+                {
+                    $result1 =0;
+                }
+                if($polls->a2_userid !=null)
+                {
+                    $result2 = count(explode(',',$polls->a2_userid));    
+                }
+                else
+                {
+                    $result2 =0;
+                }
+                if($polls->a3_userid !=null)
+                {
+                    $result3 = count(explode(',',$polls->a3_userid));    
+                }else
+                {
+                    $result3 =0;
+                }
+                if($polls->a4_userid !=null)
+                {
+                    $result4 = count(explode(',',$polls->a4_userid));    
+                }else
+                {
+                    $result4 =0;
+                }
+                
+                $totalcount=$result1+$result2+$result3+$result4;
+                if($result1 >0)
+                {
+                    $per=(100 * $result1) / $totalcount;    
+                }
+                else
+                {
+                    $per=(int)'';
+                }
+                if($result2 >0)
+                {
+                    $per2=(100 * $result2) / $totalcount;    
+                }
+                else
+                {
+                    $per2=(int)'';
+                }
+                if($result3 >0)
+                {
+                    $per3=(100 * $result3) / $totalcount;    
+                }
+                else
+                {
+                    $per3=(int)'';
+                }
+
+                 if($result4 >0)
+                {
+                    $per4=(100 * $result4) / $totalcount;    
+                }
+                else
+                {
+                    $per4=(int)'';
+                }
+                $polls->percentage1=floor($per);
+                $polls->percentage2=floor($per2);
+                $polls->percentage3=floor($per3);
+                $polls->percentage4=floor($per4);
+            }
+
+            if($options==4){
+                $polls=Polls::where('id',$id)->first();
+                if($polls->a4_userid == null)
+                {
+                    $parts = explode(',', $user_id);
+                    $roll=implode(',', $parts);
+                }
+                else
+                {
+                    $parts = explode(',', $polls->a4_userid);
+                    if (in_array($user_id, $parts))
+                    {
+                        $roll=implode(',', $parts);    
+                    }
+                    else
+                    {
+                        $parts[]=$user_id;
+                        $roll=implode(',', $parts);    
+                    }
+                }
+                Polls::where('id',$id)->update(['a4_userid'=>$roll]);
+                $polls=Polls::where('id',$id)->first();
+                if($polls->a1_userid !=null)
+                {
+                    $result1 = count(explode(',',$polls->a1_userid));    
+                }
+                else
+                {
+                    $result1 =0;
+                }
+                if($polls->a2_userid !=null)
+                {
+                    $result2 = count(explode(',',$polls->a2_userid));    
+                }
+                else
+                {
+                    $result2 =0;
+                }
+                if($polls->a3_userid !=null)
+                {
+                    $result3 = count(explode(',',$polls->a3_userid));    
+                }else
+                {
+                    $result3 =0;
+                }
+                if($polls->a4_userid !=null)
+                {
+                    $result4 = count(explode(',',$polls->a4_userid));    
+                }else
+                {
+                    $result4 =0;
+                }
+                
+                $totalcount=$result1+$result2+$result3+$result4;
+                if($result1 >0)
+                {
+                    $per=(100 * $result1) / $totalcount;    
+                }
+                else
+                {
+                    $per=(int)'';
+                }
+                if($result2 >0)
+                {
+                    $per2=(100 * $result2) / $totalcount;    
+                }
+                else
+                {
+                    $per2=(int)'';
+                }
+                if($result3 >0)
+                {
+                    $per3=(100 * $result3) / $totalcount;    
+                }
+                else
+                {
+                    $per3=(int)'';
+                }
+
+                 if($result4 >0)
+                {
+                    $per4=(100 * $result4) / $totalcount;    
+                }
+                else
+                {
+                    $per4=(int)'';
+                }
+                $polls->percentage1=floor($per);
+                $polls->percentage2=floor($per2);
+                $polls->percentage3=floor($per3);
+                $polls->percentage4=floor($per4);
+            }
+        }
+
+        if($type==2)
+        {
+            if($options==1){
+                $polls=Polls::where('id',$id)->first();
+                
+                if($polls->a1_userid != null)
+                {
+                    $parts = explode(',', $polls->a1_userid);
+                    if (in_array($user_id, $parts))
+                    {
+                        $findSkill = array_search($user_id, $parts);
+                        if ($findSkill !== false){
+
+                            unset($parts[$findSkill]);
+                        }
+                        $skills = implode(',', $parts);   
+                    }
+                }
+                Polls::where('id',$id)->update(['a1_userid'=>$skills]);
+                $polls=Polls::where('id',$id)->first();
+                if($polls->a1_userid !=null)
+                {
+                    $result1 = count(explode(',',$polls->a1_userid));    
+                }
+                else
+                {
+                    $result1 =0;
+                }
+                if($polls->a2_userid !=null)
+                {
+                    $result2 = count(explode(',',$polls->a2_userid));    
+                }
+                else
+                {
+                    $result2 =0;
+                }
+                if($polls->a3_userid !=null)
+                {
+                    $result3 = count(explode(',',$polls->a3_userid));    
+                }else
+                {
+                    $result3 =0;
+                }
+                if($polls->a4_userid !=null)
+                {
+                    $result4 = count(explode(',',$polls->a4_userid));    
+                }else
+                {
+                    $result4 =0;
+                }
+                
+                $totalcount=$result1+$result2+$result3+$result4;
+                if($result1 >0)
+                {
+                    $per=(100 * $result1) / $totalcount;    
+                }
+                else
+                {
+                    $per=(int)'';
+                }
+                if($result2 >0)
+                {
+                    $per2=(100 * $result2) / $totalcount;    
+                }
+                else
+                {
+                    $per2=(int)'';
+                }
+                if($result3 >0)
+                {
+                    $per3=(100 * $result3) / $totalcount;    
+                }
+                else
+                {
+                    $per3=(int)'';
+                }
+
+                 if($result4 >0)
+                {
+                    $per4=(100 * $result4) / $totalcount;    
+                }
+                else
+                {
+                    $per4=(int)'';
+                }
+                $polls->percentage1=floor($per);
+                $polls->percentage2=floor($per2);
+                $polls->percentage3=floor($per3);
+                $polls->percentage4=floor($per4);
+
+            }
+
+            if($options==2){
+                $polls=Polls::where('id',$id)->first();
+                
+                if($polls->a2_userid != null)
+                {
+                    $parts = explode(',', $polls->a2_userid);
+                    if (in_array($user_id, $parts))
+                    {
+                        $findSkill = array_search($user_id, $parts);
+                        if ($findSkill !== false){
+
+                            unset($parts[$findSkill]);
+                        }
+                        $skills = implode(',', $parts);   
+                    }
+                }
+                Polls::where('id',$id)->update(['a2_userid'=>$skills]);
+                $polls=Polls::where('id',$id)->first();
+                if($polls->a1_userid !=null)
+                {
+                    $result1 = count(explode(',',$polls->a1_userid));    
+                }
+                else
+                {
+                    $result1 =0;
+                }
+                if($polls->a2_userid !=null)
+                {
+                    $result2 = count(explode(',',$polls->a2_userid));    
+                }
+                else
+                {
+                    $result2 =0;
+                }
+                if($polls->a3_userid !=null)
+                {
+                    $result3 = count(explode(',',$polls->a3_userid));    
+                }else
+                {
+                    $result3 =0;
+                }
+                if($polls->a4_userid !=null)
+                {
+                    $result4 = count(explode(',',$polls->a4_userid));    
+                }else
+                {
+                    $result4 =0;
+                }
+                
+                $totalcount=$result1+$result2+$result3+$result4;
+                if($result1 >0)
+                {
+                    $per=(100 * $result1) / $totalcount;    
+                }
+                else
+                {
+                    $per=(int)'';
+                }
+                if($result2 >0)
+                {
+                    $per2=(100 * $result2) / $totalcount;    
+                }
+                else
+                {
+                    $per2=(int)'';
+                }
+                if($result3 >0)
+                {
+                    $per3=(100 * $result3) / $totalcount;    
+                }
+                else
+                {
+                    $per3=(int)'';
+                }
+
+                 if($result4 >0)
+                {
+                    $per4=(100 * $result4) / $totalcount;    
+                }
+                else
+                {
+                    $per4=(int)'';
+                }
+                $polls->percentage1=floor($per);
+                $polls->percentage2=floor($per2);
+                $polls->percentage3=floor($per3);
+                $polls->percentage4=floor($per4);
+            }
+
+            if($options==3){
+                $polls=Polls::where('id',$id)->first();
+                
+                if($polls->a3_userid != null)
+                {
+                    $parts = explode(',', $polls->a3_userid);
+                    if (in_array($user_id, $parts))
+                    {
+                        $findSkill = array_search($user_id, $parts);
+                        if ($findSkill !== false){
+
+                            unset($parts[$findSkill]);
+                        }
+                        $skills = implode(',', $parts);   
+                    }
+                }
+                Polls::where('id',$id)->update(['a3_userid'=>$skills]);
+                $polls=Polls::where('id',$id)->first();
+                if($polls->a1_userid !=null)
+                {
+                    $result1 = count(explode(',',$polls->a1_userid));    
+                }
+                else
+                {
+                    $result1 =0;
+                }
+                if($polls->a2_userid !=null)
+                {
+                    $result2 = count(explode(',',$polls->a2_userid));    
+                }
+                else
+                {
+                    $result2 =0;
+                }
+                if($polls->a3_userid !=null)
+                {
+                    $result3 = count(explode(',',$polls->a3_userid));    
+                }else
+                {
+                    $result3 =0;
+                }
+                if($polls->a4_userid !=null)
+                {
+                    $result4 = count(explode(',',$polls->a4_userid));    
+                }else
+                {
+                    $result4 =0;
+                }
+                
+                $totalcount=$result1+$result2+$result3+$result4;
+                if($result1 >0)
+                {
+                    $per=(100 * $result1) / $totalcount;    
+                }
+                else
+                {
+                    $per=(int)'';
+                }
+                if($result2 >0)
+                {
+                    $per2=(100 * $result2) / $totalcount;    
+                }
+                else
+                {
+                    $per2=(int)'';
+                }
+                if($result3 >0)
+                {
+                    $per3=(100 * $result3) / $totalcount;    
+                }
+                else
+                {
+                    $per3=(int)'';
+                }
+
+                 if($result4 >0)
+                {
+                    $per4=(100 * $result4) / $totalcount;    
+                }
+                else
+                {
+                    $per4=(int)'';
+                }
+                $polls->percentage1=floor($per);
+                $polls->percentage2=floor($per2);
+                $polls->percentage3=floor($per3);
+                $polls->percentage4=floor($per4);
+            }
+
+            if($options==4){
+                $polls=Polls::where('id',$id)->first();
+                
+                if($polls->a4_userid != null)
+                {
+                    $parts = explode(',', $polls->a4_userid);
+                    if (in_array($user_id, $parts))
+                    {
+                        $findSkill = array_search($user_id, $parts);
+                        if ($findSkill !== false){
+
+                            unset($parts[$findSkill]);
+                        }
+                        $skills = implode(',', $parts);   
+                    }
+                }
+                Polls::where('id',$id)->update(['a4_userid'=>$skills]);
+                $polls=Polls::where('id',$id)->first();
+                if($polls->a1_userid !=null)
+                {
+                    $result1 = count(explode(',',$polls->a1_userid));    
+                }
+                else
+                {
+                    $result1 =0;
+                }
+                if($polls->a2_userid !=null)
+                {
+                    $result2 = count(explode(',',$polls->a2_userid));    
+                }
+                else
+                {
+                    $result2 =0;
+                }
+                if($polls->a3_userid !=null)
+                {
+                    $result3 = count(explode(',',$polls->a3_userid));    
+                }else
+                {
+                    $result3 =0;
+                }
+                if($polls->a4_userid !=null)
+                {
+                    $result4 = count(explode(',',$polls->a4_userid));    
+                }else
+                {
+                    $result4 =0;
+                }
+                
+                $totalcount=$result1+$result2+$result3+$result4;
+                if($result1 >0)
+                {
+                    $per=(100 * $result1) / $totalcount;    
+                }
+                else
+                {
+                    $per=(int)'';
+                }
+                if($result2 >0)
+                {
+                    $per2=(100 * $result2) / $totalcount;    
+                }
+                else
+                {
+                    $per2=(int)'';
+                }
+                if($result3 >0)
+                {
+                    $per3=(100 * $result3) / $totalcount;    
+                }
+                else
+                {
+                    $per3=(int)'';
+                }
+
+                 if($result4 >0)
+                {
+                    $per4=(100 * $result4) / $totalcount;    
+                }
+                else
+                {
+                    $per4=(int)'';
+                }
+                $polls->percentage1=floor($per);
+                $polls->percentage2=floor($per2);
+                $polls->percentage3=floor($per3);
+                $polls->percentage4=floor($per4);
+            }
+        }
+        return response()->json(['data' =>$polls,'status'=>1,'message' => "Successfully Get Polls."] , 200);
+
+    }
+
 }

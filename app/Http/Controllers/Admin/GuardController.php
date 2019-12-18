@@ -48,7 +48,7 @@ class GuardController extends Controller
      */
     public function store(Request $request)
     {
-    	// dd($request->all());
+      // dd($request->all());
       $this->validate($request, [
           'name' => 'required',
           'pin' => 'required',
@@ -86,7 +86,7 @@ class GuardController extends Controller
           $this->checkForSocietyAdmin($guard->society_id);
           $society = Society::all();
           return view('admin.guard.edit',["society" => $society,'guard' => $guard]);
-    	}else{
+      }else{
           return view('admin.errors.404');
         }
     }
@@ -103,10 +103,10 @@ class GuardController extends Controller
         //
         $this->validate($request, [
             'name' => 'required',
-          	'pin' => 'required',
-          	'phone' => 'required | numeric',
-          	'gender' => 'required',
-          	'society' => 'required'
+            'pin' => 'required',
+            'phone' => 'required | numeric',
+            'gender' => 'required',
+            'society' => 'required'
         ]);
         $guard = Guard::find($id);
         if($guard){
@@ -201,15 +201,19 @@ class GuardController extends Controller
             'society_id' => 'required | numeric'
           ]);
           try {
-            
+            $path = "";
+            $data = "";
             $path = $request->file('file_import')->getRealPath();
-            // $data = Excel::load($path)->get();
+            // $data3 = Excel::load($path)->get();
             $data = Excel::load($path, function($reader) {})->get();
+              // dd($data3);
             $err[] = '';
+            //count record 43
             if($data->count()){
                 foreach ($data as $key => $value) {
-
+                    
                     $keyid = $key + 2;
+                    // dd($data);
                     if(empty($value->phone)){
                       $err[] = $value->name . " mobile number is empty.";
                     }
@@ -235,17 +239,20 @@ class GuardController extends Controller
                     }else{
                       $err[] = $value->name . " flat not exists.";
                     }
-                    
+                   
                     $arr[] = ['name' =>$value->name, 'phone' =>(int) $value->phone , 'building' =>$building_id ,'flat' =>$flat_id, 'gender' => $value->gender,'relation'=>$value->relation,'flattype'=>$value->flattype];
-                    
+                     
                 }
                 
-                if(count($err) > 0){
-                  
+                if(count($err) > 1){
+                  // dd("cccccc");
                   return redirect()->back()->withInput($request->all())->withErrors($err);
                 }else{
-                  // dd('here');
+                  // dd("Asdsadsadasd");
+                  // dd($arr);
+                  
                   if(!empty($arr)){
+                        $key = 0;
                       foreach ($arr as $key => $dv) {
                         //$building = Building::where('name', $dv['building'])->first();
                        // $flat = Flat::where('name', $dv['flat'])->first();
@@ -277,7 +284,7 @@ class GuardController extends Controller
                           $settings=new Settings();
                           $settings->user_id=$insertedId;
                           $settings->save();
-                          // dd($insertedId);
+                           dd($$settings);
                         }
                       }
                   }

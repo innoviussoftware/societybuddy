@@ -54,7 +54,7 @@ class EventController extends Controller
           'event_type' => 'required',
           'title' => 'required',
           'description' => 'required',
-          'attachment'=>'mimes:pdf,png,jpg'
+          'attachment'=>'mimes:pdf,png,jpeg'
       ]);
         $building_id=request('building_id');
 
@@ -158,7 +158,7 @@ class EventController extends Controller
           'event_type' => 'required',
           'title' => 'required',
           'description' => 'required',
-          'attachment'=>'mimes:pdf,png,jpg'
+          'attachment'=>'mimes:pdf,png,jpeg'
         ]);
 
         $notice = Event::find($member_id);
