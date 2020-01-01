@@ -119,8 +119,12 @@ $(document).ready(function (){
     var id  = $(this).val();
     getFlats(id);
   });
+  
+   $('#datepicker').datetimepicker({
 
-   $('#datepicker').datetimepicker();
+    
+      startDate: now,
+    });
   function getFlats(id){
     $.ajax({
       url:"{{ env('APP_URL') }}/admin/societies/flats/byBuilding/"+id,
@@ -138,26 +142,28 @@ $(document).ready(function (){
 });
 
 $(document).ready(function (){
-  $("body").on('change','.option4',function (){
-      var id  = $(this).val();
-      var option3=$('.option3').val();
-      if(id != '')
-      {
-        
-          if(option3 == '')
-          {              
-              $('.option3').attr("required", true);
+      $("body").on('change','.option4',function (){
+
+          var id  = $(this).val();
+          var option3=$('.option3').val();
+          if(id != '')
+          {
+            
+              if(option3 == '')
+              {              
+                  $('.option3').attr("required", true);
+              }
+              else
+              {
+                 $('.option3').removeAttr("required");
+              }
           }
           else
-          {
-             $('.option3').removeAttr("required");
+          {        
+              $('.option3').removeAttr("required");
           }
-      }
-      else
-      {        
-          $('.option3').removeAttr("required");
-      }
-  });
+
+      });
 });
 </script>
 @endsection

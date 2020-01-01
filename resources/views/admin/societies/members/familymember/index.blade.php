@@ -44,6 +44,7 @@
               <th>Phone</th>
               <th>Building</th>
               <th>Relation</th>
+              <th>QrCode</th>
             </tr>
             </thead>
           </table>

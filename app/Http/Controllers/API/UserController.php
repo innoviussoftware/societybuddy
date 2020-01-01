@@ -20,9 +20,13 @@ use App\Reviews;
 use App\Inouts;
 use App\Society;
 use App\Helpers\Notification\Otp;
+use App\Helpers\Notification\PushNotificationDemo;
 use App\Vehicle;
 use App\Notification;
-
+use App\Flat;
+use App\Building;
+use QrCode;
+use Storage;
 class UserController extends Controller
 {
     // 1 = Succcess status
@@ -125,12 +129,18 @@ class UserController extends Controller
                 $member->building_id = request('building_id');
                 $member->flat_id = request('flat_id');
                 $member->flatType = request('flatType');
-                // $member->city_id = request('city_id');
-                // $member->area_id = request('area_id');
                 $member->profession = request('profession');
-
                 $member->profession_detail = request('profession_detail');
                 $member->relation = 'self';
+                $flatname=Flat::select('name')->where('id',request('flat_id'))->first();
+                $buildingname=Building::select('name')->where('id',request('building_id'))->first();
+
+                $orcode='Name: '.request('username').PHP_EOL.'Flat No: '.$buildingname->name.'-'.$flatname->name.PHP_EOL.'Phone: '.request('phone'); 
+                
+                $codeimage=QrCode::format('png')->size(300)->generate($orcode); 
+                $output_file =   time() . '.png';
+                $dd=Storage::disk('local')->put($output_file, $codeimage);
+                $member->qrcode=$output_file;                
                 $member->save();
 
                 $visitor=new Settings();
@@ -252,6 +262,7 @@ class UserController extends Controller
             $dob=$user->member->dob;
             $bloodgroup=$user->member->bloodgroup;
             $occupancy=$user->member->occupancy;
+            $QrCode=$user->member->qrcode;
 
            $buildingarray=isset($user->member->building->name)?$user->member->building->name:'';
            $buildingidarray=isset($user->member->building->id)?$user->member->building->id:'';
@@ -268,6 +279,7 @@ class UserController extends Controller
            $user->relation=$relation;
            $user->dob=$dob;
            $user->bloodgroup=$bloodgroup;
+           $user->qrcode=$QrCode;
            $user->society_logo=isset($society_logo->logo)?$society_logo->logo:'';
            
            unset($user->member);
@@ -319,6 +331,16 @@ class UserController extends Controller
           $member->dob = request('family_member_dob');
           $member->bloodgroup = request('family_member_bloodgroup');
           $member->relation = request('family_member_relation');
+
+          $flatname=Flat::select('name')->where('id',$loggedInUser->member->flat_id)->first();
+          $buildingname=Building::select('name')->where('id',$loggedInUser->member->building_id)->first();
+
+          $orcode='Name: '.request('family_member_name').PHP_EOL.'Flat No: '.$buildingname->name.'-'.$flatname->name.PHP_EOL.'Phone: '.request('family_member_phone'); 
+          $codeimage=QrCode::format('png')->size(300)->generate($orcode); 
+          $output_file =   time() . '.png';
+          $dd=Storage::disk('local')->put($output_file, $codeimage);
+          $member->qrcode=$output_file;    
+
           $member->save();
 
           $visitor=new Settings();
@@ -411,6 +433,13 @@ class UserController extends Controller
           $member->gender = request('family_member_gender');
           $member->bloodgroup = request('family_member_bloodgroup');
           $member->relation = request('family_member_relation');
+          $flatname=Flat::select('name')->where('id',$member->flat_id)->first();
+          $buildingname=Building::select('name')->where('id',$member->building_id)->first();
+          $orcode='Name: '.request('family_member_name').PHP_EOL.'Flat No: '.$buildingname->name.'-'.$flatname->name.PHP_EOL.'Phone: '.request('family_member_phone'); 
+          $codeimage=QrCode::format('png')->size(300)->generate($orcode); 
+          $output_file =   time() . '.png';
+          $dd=Storage::disk('local')->put($output_file, $codeimage);
+          $member->qrcode=$output_file;   
           $member->save();
         }
         return response()->json(['data' => [],'status'=> 1, 'message' => "Family Member updated"] , 200);
@@ -1045,8 +1074,22 @@ class UserController extends Controller
 
           if($id)
           {
-            $users=User::where('id',$id)->delete();
 
+            $users_id=Member::where('user_id',$id)->first();
+            
+            $Settings=Settings::where('user_id',$users_id->family_user_id)->first();
+            
+            $pieces = explode(",", isset($Settings->receiver_id)?$Settings->receiver_id:''); 
+            
+            if (in_array($id, $pieces))
+            {
+                
+                unset($pieces[array_search($id,$pieces)]);
+                $pieces = implode(",", $pieces); 
+                $Settings=Settings::where('user_id',$users_id->family_user_id)->update(['receiver_id'=>$pieces]);
+               
+            }
+            $users=User::where('id',$id)->delete();
             $members=Member::where('user_id',$id)->delete();  
 
 
@@ -1059,6 +1102,27 @@ class UserController extends Controller
           }
           
       }
+
+    public function notificationDemo(Request $request)
+    {
+            $request=request('fcm_token');
+
+            $newtoken= $request;
+            
+            $pmsg = array(
+                    'body' => 'Security alert',
+                    'title' => 'Demo',
+                    'icon' => 'myicon',
+                    'sound' => 'audio.mp3'
+            );
+
+            $data=array(
+                'notification_type'=>'security',
+            );
+
+
+            PushNotificationDemo::SendPushNotification($pmsg, $data,[$newtoken]);
+    }
       
 
 }

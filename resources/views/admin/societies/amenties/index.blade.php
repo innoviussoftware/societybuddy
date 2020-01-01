@@ -3,14 +3,14 @@
 @section('content')
 <section class="content-header">
   <h1>
-    Members
+    Amenities
     <small>{{ $society->name }}</small>
   </h1>
   <ol class="breadcrumb">
     <li><a href="{{ route('admin.dashboard') }}"><i class="fa fa-dashboard"></i> Dashboard</a></li>
     <li><a href="{{ route('admin.societies.index') }}">Societies</a></li>
     <li><a href="{{ route('admin.societies.edit', $society->id) }}">{{ $society->name }}</a></li>
-    <li><a href="#">Members</a></li>
+    <li><a href="#">Amenities</a></li>
   </ol>
 </section>
 
@@ -20,17 +20,15 @@
     <div class="col-xs-12">
       <div class="box">
         @role(['admin','sub_admin'])
-        <ul class="nav nav-tabs">
-         <li ><a href="{{ route('admin.societies.edit', $society->id) }}">Society Details</a></li>
-         <li  ><a href="{{ route('admin.societies.buildings.add', $society->id) }}">Buildings</a></li>
-         <li ><a href="{{ route('admin.societies.adminusers.index', $society->id) }}">Admin Users</a></li>
-         <li class="active"><a href="{{ route('admin.societies.members.index', $society->id) }}">Members</a></li>
-         <li><a href="{{ route('admin.societies.settings.index', $society->id) }}">Settings</a></li>
-       </ul>
+          <ul class="nav nav-tabs">
+           <li ><a href="{{ route('admin.societies.edit', $society->id) }}">Society Details</a></li>
+           <li  ><a href="{{ route('admin.societies.buildings.add', $society->id) }}">Buildings</a></li>
+           <li class="active"><a href="{{ route('admin.societies.adminusers.index', $society->id) }}">Admin Users</a></li>
+           <li><a href="{{ route('admin.societies.members.index', $society->id) }}">Members</a></li>
+         </ul>
        @endrole
         <div class="box-body">
-          <a class="btn btn-primary" href="{{ route('admin.societies.members.add', $society->id) }}">+ Add Member</a>
-             <a class="btn btn-primary" href="{{ route('admin.guard.importadd', $society->id) }}">Import</a>
+          <a class="btn btn-primary pull-right" href="{{ route('admin.societies.amenties.add', $society->id) }}">+ Add Amenities</a>
           <br>
           <br>
           <table id="societies_datatable" class="table table-bordered table-striped">
@@ -38,11 +36,9 @@
             <tr>
               <th>ID</th>
               <th>Name</th>
-              <th>Email</th>
-              <th>Phone</th>
-              <th>Building</th>
-              <th>Type</th>
-              <th>Occupy</th>
+              <th>Description</th>
+              <th>Images</th>
+              <th>Amount</th>
               <th>Status</th>
               <th>Action</th>
             </tr>
@@ -56,9 +52,7 @@
 
 @section('custom_js')
 <script>
-  function confirm(url, name) {
-
-
+function confirm(url, name) {
     bootbox.confirm({
         title: '',
         message: '<h5><i class="fa fa-remove text-danger"></i>&nbsp;&nbsp;' + name + '</h5>',
@@ -77,19 +71,19 @@
         }
     });
 }
-$(document).ready(function(){
 
+
+$(document).ready(function(){
   var doctordatatable = $('#societies_datatable').DataTable({
       responsive: true,
       "processing": true,
-      "ajax": "{{ route('admin.societies.arrayMembers', $society->id) }}",
+      "ajax": "{{ route('admin.societies.arrayamenties', $society->id) }}",
       "language": {
-          "emptyTable": "No any Member available"
+          "emptyTable": "No any Amenities available"
       },
       "order": [[0, "desc"]],
   });
   doctordatatable.columns([0]).visible(false, false);
 });
 </script>
-
 @endsection

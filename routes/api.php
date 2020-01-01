@@ -21,6 +21,7 @@ use Illuminate\Http\Request;
 
 Route::namespace('API')->group(function () {
 
+        Route::post('demonotify', 'UserController@notificationDemo');
     Route::post('verifyemail', 'GuardController@emailExists');
 
 	Route::post('loginotp', 'UserController@login_opt');
@@ -68,6 +69,8 @@ Route::namespace('API')->group(function () {
     Route::post('verifyvehical','GuardController@verifyvehical');
 
     Route::get('categorieslist','SocietyController@getCategories');
+
+    Route::post('amenties','GuardController@getAmenties');
 
 
 });
@@ -141,6 +144,11 @@ Route::middleware('auth:api')->prefix('user')->namespace('API')->group(function 
 
     Route::get('pollslist','SocietyController@pollslist');
     Route::post('pollsresult','SocietyController@pollsanswer');
+
+    Route::post('bookamenties','GuardController@bookAmenties');
+    Route::get('bookinglist','GuardController@bookingList');
+    Route::post('deletebooking','GuardController@deletebooking');
+    Route::post('updatebooking','GuardController@updatebooking');    
 
 });
 

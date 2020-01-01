@@ -15,6 +15,9 @@
     </a>
     @endrole
     @role(['society_admin'])
+    <?php $notificationcount=App\SocietySettings::where('society_id',auth()->user()->society_id)->first();
+      $module = explode(',', $notificationcount->module_name);
+      ?>
     <ul class="nav navbar-nav">
       <li><a href="{{ route('admin.dashboard') }}"><i class="fa fa-home" aria-hidden="true"></i> Home</a></li>
       <li class="dropdown">
@@ -29,12 +32,15 @@
            <li><a href="{{ route('admin.societies.notices.index',auth()->user()->society_id) }}">Manage Notices</a></li>
            <li><a href="{{ route('admin.societies.events.index',auth()->user()->society_id) }}">Manage Events</a></li>
            <li><a href="{{ route('admin.societies.circulars.index',auth()->user()->society_id) }}">Manage Circulars</a></li>
-          <!--  <li><a href="{{ route('admin.societies.maintence.index',auth()->user()->society_id) }}">Manage Maintence</a></li> -->
+           <?php if(in_array("Maintenance", $module)){?>
+           <li><a href="{{ route('admin.societies.maintencepayment.index',auth()->user()->society_id) }}">Manage Maintenance</a></li>
+         <?php }?>
          </ul>
       </li>
       
       <li><a href="{{ route('admin.societies.members.index',auth()->user()->society_id) }}"><i class="fa fa-building" aria-hidden="true"></i> Manage Residents</a></li>
       <li><a href="{{ route('admin.societies.serviceprovider.index',auth()->user()->society_id) }}"><i class="fa fa-cogs" aria-hidden="true"></i> Manage Domestic Helpers</a></li>
+      
       <li class="dropdown">
          <a class="dropdown-toggle" data-toggle="dropdown" href="#"><i class="fa fa-file-text" aria-hidden="true"></i> Manage Reports
          <span class="caret"></span></a>
@@ -45,8 +51,20 @@
            <li><a href="{{ route('admin.societies.helpers.index',auth()->user()->society_id) }}">Domestic helper Report</a></li>
          </ul>
       </li>
-      <li><a href="{{ route('admin.societies.helpdesk.index',auth()->user()->society_id) }}"><i class="fa fa-info-circle" aria-hidden="true"></i> Help desk</a></li>
-      <li><a href="{{ route('admin.societies.polls.index',auth()->user()->society_id) }}"><i class="fa fa-info-circle" aria-hidden="true"></i> Polls</a></li>
+
+      <li class="dropdown">
+         <a class="dropdown-toggle" data-toggle="dropdown" href="#"><i class="fa fa-file-text" aria-hidden="true"></i> More
+         <span class="caret"></span></a>
+         <ul class="dropdown-menu">
+           <li><a href="{{ route('admin.societies.helpdesk.index',auth()->user()->society_id) }}"><i class="fa fa-home" aria-hidden="true"></i> Help desk</a></li>
+           <li><a href="{{ route('admin.societies.polls.index',auth()->user()->society_id) }}"><i class="fa fa-cog " aria-hidden="true"></i> Polls</a></li>
+           <li><a href="{{ route('admin.societies.amenties.index',auth()->user()->society_id) }}"><i class="fa fa-info-circle" aria-hidden="true"></i> Amenities</a></li>
+           <?php if(in_array("Maintenance", $module)){?>
+           <li><a href="{{ route('admin.societies.maintence.index',auth()->user()->society_id) }}"><i class="fa fa-cog" aria-hidden="true"></i> Maintenance Settings</a></li>
+         <?php }?>
+         </ul>
+      </li>
+
     </ul>
     @endrole
 

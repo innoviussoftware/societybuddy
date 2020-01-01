@@ -13,7 +13,7 @@ class Circular extends Model
         'society_id','building_id','member_id','title','description','pdffile'
     ];
     
-     public function society(){
+    public function society(){
         return $this->belongsTo('App\Society','society_id');
     }
 

@@ -24,6 +24,8 @@ use App\Helpers\Notification\Otp;
 use App\Helpers\Notification\TinyUrl;
 use App\DomesticHelpers;
 use App\HelpersInout;
+use App\Amenties;
+use App\Amentiesbooking;
 class GuardController extends Controller
 {
     //
@@ -480,24 +482,72 @@ class GuardController extends Controller
 
             $visitor=Inouts::where('request_id',$id)->where('type',$user_type)->where('flag',1)->first();
 
+
             if($visitor['intime'] == null)
-            {
-                
-                    $inouts = new Inouts();
-                    $inouts->society_id = request('society_id');
-                    $inouts->guard_id = request('guard_id');
-                    $inouts->request_id = $id;
-                    $inouts->type = $user_type;
-                    $inouts->intime = request('intime');
-                    $inouts->flag = 1;
-                    $inouts->building_id=request('building_id');
-                    $inouts->flat_id=request('flat_id');
-                    $inouts->save();
+            {       
+                    if($user_type==2 ||$user_type==1)
+                    {
+                        $building_id=Building::where('name',request('building_id'))->where('society_id',request('society_id'))->first();
 
-                    $Visitor=InviteGuest::where('id',$id)->update(['flag'=>1]);
+                        $building=Flat::where('name',request('flat_id'))->where('building_id',$building_id->id)->first();
+
+                        $userdeviceid=Member::where('society_id',request('society_id'))->where('flat_id',$building->id)->where('relation','=','self')->first();
+
+                        if($userdeviceid->occupancy=='Tenant' || $userdeviceid->occupancy=='tenant')
+                        {
+                            $users=Member::where('society_id',request('society_id'))->where('flat_id',$building->id)->where('flatType','=','Renting the flat')->first();
+                        }
+                        else
+                        {
+                            $users=Member::where('society_id',request('society_id'))->where('flat_id',$building->id)->where('relation','=','self')->first();
+                        }
+
+                        $Settings=Settings::where('user_id',$users->user_id)->first();
+                        
+                        if($Settings->mute_notification_status==1)
+                        {
+                            $inouts = new Inouts();
+                            $inouts->society_id = request('society_id');
+                            $inouts->guard_id = request('guard_id');
+                            $inouts->request_id = $id;
+                            $inouts->type = $user_type;
+                            $inouts->intime = request('intime');
+                            $inouts->flag = 1;
+                            $inouts->building_id=request('building_id');
+                            $inouts->flat_id=request('flat_id');
+                            $inouts->save();
+
+                            $Visitor=InviteGuest::where('id',$id)->update(['flag'=>1]);
 
 
-                    return response()->json(['data' => $inouts,'status'=>1,'message' => "Entry In Successfully."] , 200);                
+                            return response()->json(['data' => $inouts,'status'=>1,'message' => "Entry In Successfully."] , 200);   
+                        }
+                        else
+                        {
+                            return response()->json(['data' => (Object)[],'status'=>2,'message' =>$Settings->reason_to_mute_notification] , 200);   
+                        }
+                    }
+
+                    if($user_type==3)
+                    {
+                            $inouts = new Inouts();
+                            $inouts->society_id = request('society_id');
+                            $inouts->guard_id = request('guard_id');
+                            $inouts->request_id = $id;
+                            $inouts->type = $user_type;
+                            $inouts->intime = request('intime');
+                            $inouts->flag = 1;
+                            $inouts->building_id=request('building_id');
+                            $inouts->flat_id=request('flat_id');
+                            $inouts->save();
+
+                            $Visitor=InviteGuest::where('id',$id)->update(['flag'=>1]);
+
+
+                            return response()->json(['data' => $inouts,'status'=>1,'message' => "Entry In Successfully."] , 200); 
+                    }
+                    
+                                
             }
             else
             {
@@ -1390,20 +1440,130 @@ class GuardController extends Controller
         $vehicle_number=request('vehicle_number');
 
         $society_id=request('society_id');
-        
-        $vehicle=Vehicle::where('number','=',$vehicle_number)->with('user')->whereHas('user',function($q) use ($society_id){
-            $q->where('society_id',$society_id);
-        })->first();
-        
-        if($vehicle)
+
+        //$mobilenumber=request('mobilenumber');
+
+        $type=request('type');
+
+        if($type==1)
         {
-            return response()->json(['data' => (Object)[],'status'=>1,'message' => "Vehicle Verified."] , 200);
-        }else
-        {
-            return response()->json(['data' => (Object)[],'status'=>0,'message' => "Vehicle not verified."] , 200);
+            $vehicle=Vehicle::where('number','=',$vehicle_number)->with('user')->whereHas('user',function($q) use ($society_id){
+                 $q->where('society_id',$society_id);
+            })->first();
+        
+            if($vehicle)
+            {
+                return response()->json(['data' => (Object)[],'status'=>1,'message' => "Vehicle Verified."] , 200);
+            }else
+            {
+                return response()->json(['data' => (Object)[],'status'=>0,'message' => "Vehicle not verified."] , 200);
+            }
         }
+
+        if($type==2)
+        {
+            $member=Member::with('user')->whereHas('user',function($q) use ($vehicle_number,$society_id){
+                 $q->where('phone',$vehicle_number);
+                 $q->where('society_id',$society_id);
+            })->first();
+        
+            if($member)
+            {
+                return response()->json(['data' => (Object)[],'status'=>1,'message' => "Member Verified."] , 200);
+            }else
+            {
+                return response()->json(['data' => (Object)[],'status'=>0,'message' => "Member not verified."] , 200);
+            }
+        }
+        
+       
     }
 
+    public function getAmenties(Request $request)
+    {
+        $amenties=Amenties::where('society_id',request('society_id'))->where('status',1)->get();
 
+        return response()->json(['data' => $amenties,'status'=>1,'message' => "Amenties list."] , 200);
+    }
 
+    public function bookAmenties(Request $request)
+    {
+        $amenties_id=request('id');
+        $date=request('date');
+        $start_time=request('start_time');
+        $end_time=request('end_time');
+        $society_id=request('society_id');
+        $user_id = auth()->user()->id;
+        $description=request('description');
+
+        $amentiesBooking = new Amentiesbooking();
+        $amentiesBooking->amenties_id = $amenties_id;
+        $amentiesBooking->user_id = $user_id;
+        $amentiesBooking->date = $date;            
+        $amentiesBooking->start_time = $start_time;
+        $amentiesBooking->end_time = $end_time;
+        $amentiesBooking->description = $description;
+        $amentiesBooking->save();
+
+        return response()->json(['data' => $amentiesBooking,'status'=>1,'message' => "Booking Successfully."] , 200);  
+    }
+
+    public function bookingList(Request $request)
+    {
+        $user_id = auth()->user()->id;
+
+        $amentiesBooking = Amentiesbooking::where('user_id',$user_id)->with('amenties')->get();
+
+        $response=[];
+
+        foreach ($amentiesBooking as $am) {
+            
+             $response[] = [
+                        "id" => $am->id,
+                        "amenties_id" => $am->amenties_id,
+                        "user_id" => $am->user_id,
+                        "date" => $am->date,
+                        "start_time" => $am->start_time,
+                        "end_time" => $am->end_time,
+                        "description" => $am->description,
+                        "apporve" => $am->apporve,
+                        "amenties_name" => isset($am->amenties->name)?$am->amenties->name:'',
+                        "created_at"=>isset($am->created_at)?$am->created_at->toDateTimeString():'',
+                        "updated_at"=>isset($am->updated_at)?$am->updated_at->toDateTimeString():'',
+            ];
+        }
+
+        return response()->json(['data' => $response,'status'=>1,'message' => "Booking List."] , 200);  
+
+    }
+
+    public function deletebooking(Request $request)
+    {
+        $id=request('id');
+
+        $amentiesBooking = Amentiesbooking::where('id',$id)->delete();
+
+        return response()->json(['data' => [],'status'=>1,'message' => "Booking Deleted Successfully."] , 200); 
+    }
+
+    public function updatebooking(Request $request)
+    {
+        $id=request('id');
+
+        $user_id = auth()->user()->id;
+
+        $booking=Amentiesbooking::find($id);
+
+        $booking->date=request('date');
+
+        $booking->start_time=request('start_time');
+
+        $booking->end_time=request('end_time');
+
+        $booking->description=request('description');
+
+        $booking->save();
+
+        return response()->json(['data' => $booking,'status'=>1,'message' => "Booking Updated Successfully."] , 200);  
+    }
 }

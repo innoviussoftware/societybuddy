@@ -25,6 +25,7 @@
          <li class="active" ><a href="{{ route('admin.societies.buildings.add', $society->id) }}">Buildings</a></li>
          <li><a href="{{ route('admin.societies.adminusers.index', $society->id) }}">Admin Users</a></li>
          <li><a href="{{ route('admin.societies.members.index', $society->id) }}">Members</a></li>
+         <li><a href="{{ route('admin.societies.settings.index', $society->id) }}">Settings</a></li>
        </ul>
        @endrole
 

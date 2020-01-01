@@ -585,18 +585,14 @@ class SocietyController extends Controller
         $response = [];
 
               foreach ($polls as $u) {
-                $date=date('Y-m-d H:i:s');
-                if($u->expires_on == $date)
-                {
-                    Polls::where('id',$u->id)->update(['active'=>0]);
-                }
+               
                 if($u->a1_userid !=null)
                 {
                     $result1 = count(explode(',',$u->a1_userid));    
                 }
                 else
                 {
-                    $result1 =0;
+                    $result1 = 0;
                 }
                 if($u->a2_userid !=null)
                 {
@@ -604,21 +600,21 @@ class SocietyController extends Controller
                 }
                 else
                 {
-                    $result2 =0;
+                    $result2 = 0;
                 }
                 if($u->a3_userid !=null)
                 {
                     $result3 = count(explode(',',$u->a3_userid));    
                 }else
                 {
-                    $result3 =0;
+                    $result3 = 0;
                 }
                 if($u->a4_userid !=null)
                 {
                     $result4 = count(explode(',',$u->a4_userid));    
                 }else
                 {
-                    $result4 =0;
+                    $result4 = 0;
                 }
                 
                 $totalcount=$result1+$result2+$result3+$result4;

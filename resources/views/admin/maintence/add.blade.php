@@ -4,13 +4,13 @@
 <section class="content-header">
   <h1>
     
-    <small>Maintence</small>
+    <small>Maintenance</small>
   </h1>
   <ol class="breadcrumb">
     <li><a href="{{ route('admin.dashboard') }}"><i class="fa fa-dashboard"></i> Dashboard</a></li>
     <li><a href="{{ route('admin.societies.index') }}">Societies</a></li>
     <li><a href="{{ route('admin.societies.edit', $society->id) }}">{{ $society->name }}</a></li>
-    <li><a href="{{ route('admin.societies.notices.index', $society->id) }}">Maintence</a></li>
+    <li><a href="{{ route('admin.societies.notices.index', $society->id) }}">Maintenance</a></li>
     <li><a href="#">Add</a></li>
   </ol>
 </section>
@@ -23,13 +23,13 @@
         @csrf
 
         <div class="box-header">
-          <h3 class="box-title">Add Maintence</h3>
+          <h3 class="box-title">Add Maintenance</h3>
         </div>
         <!-- /.box-header -->
         <div class="box-body">
           <div class="row">
             <div class="col-md-6">
-              <!-- <div class="form-group">
+              <div class="form-group">
                 <label>Building</label>
                 <button type="button"   class="btn btn-primary" style="float: right;" id="select_all">Select All</button>
                  <button type="button"  class="btn btn-danger" style="display: none;float: right;" id="remove_all">Remove All</button>
@@ -39,13 +39,13 @@
                   @endforeach
                 </select>
                 
-              </div> -->
+              </div>
               
               <div class="form-group">
-                <label >(A) Maintance Amount</label>
+                <label >(A) Maintenance Amount</label>
               </div>
               <div class="form-group">
-                <input type="text" name="amount" class="form-control" placeholder="Enter Maintance amount" value="{{ old('title') }}" required>
+                <input type="text" name="amount" class="form-control" placeholder="Enter Maintenance amount" value="{{ old('title') }}" required>
                
               </div>
 
@@ -55,14 +55,14 @@
                       Monthly 
                     </label>
                     <label>
-                      <input type="radio" name="optionsRadios" id="optionsRadios3" value="yearly" class="radiobutton">
+                      <input type="radio" name="optionsRadios" id="optionsRadios4" value="yearly" class="radiobutton">
                       Yearly 
                     </label>
                 </div>
 
                 <div class="form-group">
                     <label>
-                      <input type="checkbox" id="sameamount" name="sameamount"> Maintance same for tenants
+                      <input type="checkbox" id="sameamount" name="sameamount"> Maintenance same for tenants
                     </label>
                 </div>
                    
@@ -75,14 +75,19 @@
               </div>
 
               <div class="form-group">
-                <input type="text" name="monthly" class="form-control monthlydate" placeholder="Enter Monthly" value="{{ old('title') }}" required id="monthlydate" style="width: 200px;display: none;">
+                <select class="form-control monthlydate" name="monthly" style="width: 200px;display: none;">
+                  <option value="">Select Month Date</option>
+                  @for ($i = 1; $i <= 31; $i++)
+                        <option value="{{ $i }}">{{ $i }}</option>
+                  @endfor
+                </select>
               </div>
 
               <div class="form-group">
-                <input type="text" name="yearly" class="form-control yearlydate" placeholder="Enter Yearly" value="{{ old('title') }}" required id="yearlydate" style="width: 200px;display: none;">
+                <input type="text" name="yearly" class="form-control yearlydate" placeholder="Enter Yearly" value="{{ old('title') }}" id="yearlydate" style="width: 200px;display: none;">
               </div>
               <div class="form-group">
-                <label >(C) Penalty</label>
+                <label >(C) Penalty/ day </label>
               </div>
 
               <div class="input-group">
@@ -121,17 +126,10 @@ $(document).ready(function (){
     getFlats(id);
   });
 
-  // $('#startdate').datepicker({
-  //     format: "dd",
-  //   viewMode: "days", 
-  //   minViewMode: "days"
-
-  // })
 
   $('#yearlydate').datepicker({
-      format: "mm-yyyy",
-    viewMode: "months", 
-    minViewMode: "months"
+     format: 'yyyy/mm/dd',
+    
   })
 
 });
@@ -168,7 +166,6 @@ $(document).ready(function (){
     $('.radiobutton').click(function ()
     {      
       var radioValue = $("input[name='optionsRadios']:checked").val();
-       
         if(radioValue=='monthly')
         {
             $('.monthlydate').show();

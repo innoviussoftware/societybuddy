@@ -7,7 +7,7 @@
   </h1>
   <ol class="breadcrumb">
     <li><a href="#"><i class="fa fa-dashboard"></i> Home</a></li>
-    <li><a href="#">Maintence</a></li>
+    <li><a href="#">Maintenance</a></li>
   </ol>
 </section>
 
@@ -16,9 +16,9 @@
     <div class="col-xs-12">
       <div class="box">
         <div class="box-header">
-          <h3 class="box-title">Maintence List
+          <h3 class="box-title">Maintenance List
           </h3>
-          <a href="{{ route('admin.societies.maintence.add',$society->id) }}" class="btn btn-primary pull-right">Add Maintence+</a>
+          <a href="{{ route('admin.societies.maintence.add',$society->id) }}" class="btn btn-primary pull-right">Add Maintenance+</a>
         </div>
         <!-- /.box-header -->
         <div class="box-body">
@@ -29,10 +29,13 @@
             <tr>
               <tr>
               <th>ID</th>
-              <th>Title</th>
-              <th>Description</th>
-              <th>View Till</th>
-              <th>Building</th>              
+              <th>Building</th>   
+              <th>Maintenance Amount</th>
+              <th>Tenant Amount</th>
+              <th>Payment Mode</th>
+              <th>Monthly Date</th>
+              <th>Yearly Date</th>
+              <th>Penalty</th>
               <th>Action</th>
             </tr>
             </tr>
@@ -54,11 +57,30 @@
 @endsection
 @section('custom_js')
   <script>
+    function confirm(url, name) {
+    bootbox.confirm({
+        title: '',
+        message: '<h5><i class="fa fa-remove text-danger"></i>&nbsp;&nbsp;' + name + '</h5>',
+        buttons: {
+            cancel: {
+                label: '<i class="fa fa-times"></i> Cancel'
+            },
+            confirm: {
+                label: '<i class="fa fa-check"></i> Confirm'
+            }
+        },
+        callback: function (result) {
+            if (result == true) {
+                window.location.replace(url);
+            }
+        }
+    });
+}
       $(document).ready(function () {
           var doctordatatable = $('#areas_datatable').DataTable({
               responsive: true,
               "processing": true,
-              "ajax": "{{ route('admin.societies.arrayNotice',$society->id) }}",
+              "ajax": "{{ route('admin.societies.arrayMaintence',$society->id) }}",
               "language": {
                   "emptyTable": "No Maintence available"
               },

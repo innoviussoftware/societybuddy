@@ -22,10 +22,8 @@
 
 <section class="content">
   <div class="row">
-
     <div class="col-xs-12">
       <div class="box">
-
         @role(['admin','sub_admin'])
         <ul class="nav nav-tabs">
            <li ><a href="{{ route('admin.societies.edit', $society->id) }}">Society Details</a></li>
@@ -34,7 +32,6 @@
            <li class="active"><a href="{{ route('admin.societies.members.index', $society->id) }}">Members</a></li>
         </ul>
        @endrole
-
         <div class="box-body">
           
           <a class="btn btn-primary" href="{{ route('admin.societies.polls.add', $society->id) }}" style="float: right;">+ Add New</a>
@@ -51,6 +48,7 @@
               <th>Option_3</th>
               <th>Option_4</th>
               <th>Expire Date</th>
+              <th>Result</th>
               <th>Status</th>
               <th>Action</th>
             </tr>

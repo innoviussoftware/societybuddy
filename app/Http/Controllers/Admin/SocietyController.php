@@ -26,8 +26,12 @@ use App\DomesticHelpers;
 use App\Notification;
 use App\Referral;
 use App\Polls;
+use App\SocietySettings;
 use App\Helpers\Notification\Otp;
 use App\Helpers\Notification\FamilyMember;
+use QrCode;
+use Storage;
+use Carbon\Carbon;
 class SocietyController extends Controller
 {
     /**
@@ -285,6 +289,15 @@ class SocietyController extends Controller
         $member->flat_id = request('flat_id');
         $member->gender = request('gender');
         $member->relation = 'self';
+
+        $flatname=Flat::select('name')->where('id',request('flat_id'))->first();
+        $buildingname=Building::select('name')->where('id',request('building_id'))->first();        
+        $orcode='Name: '.request('name').PHP_EOL.'Flat No: '.$buildingname->name.'-'.$flatname->name.PHP_EOL.'Phone: '.request('phone'); 
+        $codeimage=QrCode::format('png')->size(300)->generate($orcode); 
+        $output_file =   time() . '.png';
+        $dd=Storage::disk('local')->put($output_file, $codeimage);
+        $member->qrcode=$output_file;        
+
         $member->save();
         $visitor=new Settings();
         $visitor->user_id=$city->id;
@@ -564,6 +577,16 @@ class SocietyController extends Controller
 
           $member->policeverify=request('policeverify');
           $member->since=request('since');
+          $flatname=Flat::select('name')->where('id',request('flat_id'))->first();
+          $buildingname=Building::select('name')->where('id',request('building_id'))->first();
+          $phonenumber=User::where('id',$member->user_id)->first();
+          
+          $orcode='Name: '.request('name').PHP_EOL.'Flat No: '.$buildingname->name.'-'.$flatname->name.PHP_EOL.'Phone: '.$phonenumber->phone; 
+
+          $codeimage=QrCode::format('png')->size(300)->generate($orcode); 
+          $output_file =   time() . '.png';
+          $dd=Storage::disk('local')->put($output_file, $codeimage);
+          $member->qrcode=$output_file;        
           $member->save();
           $user = User::find($member->user_id);
           $user->name = request('name');
@@ -681,7 +704,7 @@ class SocietyController extends Controller
           $city->delete();
           $member->delete();
         }
-        return redirect()->route('admin.societies.members.index',$society_id)->with('success','Admin Member deleted successfully.');
+        return redirect()->route('admin.societies.members.index',$society_id)->with('success','Member deleted successfully.');
 
     }
     public function deleteMembersVehicles($vehicle_id){
@@ -777,6 +800,12 @@ class SocietyController extends Controller
                 $sub[] = isset($s->building->name)?$s->building->name.'-'.$s->flat->name:'';
                 $sub[] = $s->flatType;
                 $sub[] = $s->occupancy;
+                if($s->qrcode)
+                { 
+                  $img = env('APP_URL_STORAGE').$s->qrcode;
+                } else {
+                  $img = asset('no-image.png');
+                }
                 
                 if($s->user->activate==1)
                 {
@@ -801,7 +830,16 @@ class SocietyController extends Controller
                 }
                 
                 $action .= '<a class="edit" href="'.route('admin.societies.members.edit', ["society_id" => $society_id, "member_id" => $id]).'"><i class="fa fa-pencil-square-o">&nbsp;</i></a>';
-                $action .= '<a class="delete" data-toggle="tooltip" onclick="return confirm (`' . $delete_url . '`,`Are you sure you want to delete this record?`)"><i class="fa fa-trash"></i>&nbsp;&nbsp;</a></div>';
+                $action .= '<a class="delete" data-toggle="tooltip" onclick="return confirm (`' . $delete_url . '`,`Are you sure you want to delete this record?`)"><i class="fa fa-trash"></i>&nbsp;&nbsp;</a>';
+                if($s->qrcode != null)
+                {
+                    $action .= "<a class='example-image-link' href='".$img."' data-lightbox='example-1'><img width='15' class='example-image' src='".$img."'/></a></div>";
+                }
+                else
+                {
+                    $action .= "</div>";
+                }
+                
 
                 $sub[] = $action;
                 $response[] = $sub;
@@ -885,6 +923,23 @@ class SocietyController extends Controller
                 $sub[] = $s->user->phone;
                 $sub[] = $s->building->name.'-'.$s->flat->name;
                 $sub[] = $s->relation;
+                if($s->qrcode)
+                { 
+                  $img = env('APP_URL_STORAGE').$s->qrcode;
+                } else {
+                  $img = asset('no-image.png');
+                }
+                if($s->qrcode != null)
+                {
+                    $action = "<div><a class='example-image-link' href='".$img."' data-lightbox='example-1'><img width='15' class='example-image' src='".$img."'/></a></div>";
+                }
+                else
+                {
+                    $action = "";
+                }
+                
+
+                $sub[] = $action;
                 $response[] = $sub;
               }
             $userjson = json_encode(["data" => $response]);
@@ -1717,7 +1772,7 @@ class SocietyController extends Controller
     public function Arraypolls(Request $request, $society_id)
     {
             $response = [];
-            $sosieties = Polls::where("society_id",$society_id)->get();
+            $sosieties = Polls::where('expires_on','>=',Carbon::now())->where("society_id",$society_id)->get();
 
             foreach ($sosieties as $s) {
 
@@ -1730,20 +1785,99 @@ class SocietyController extends Controller
                 $sub[] = isset($s->a3)?$s->a3:'-';
                 $sub[] = isset($s->a4)?$s->a4:'-';
                 $sub[] = isset($s->expires_on)?$s->expires_on:'-';
+
+                if($s->a1_userid !=null)
+                {
+                    $result1 = count(explode(',',$s->a1_userid));    
+                }
+                else
+                {
+                    $result1 = 0;
+                }
+
+                if($s->a2_userid !=null)
+                {
+                    $result2 = count(explode(',',$s->a2_userid));    
+                }
+                else
+                {
+                    $result2 = 0;
+                }
+
+                if($s->a3_userid !=null)
+                {
+                    $result3 = count(explode(',',$s->a3_userid));    
+                }else
+                {
+                    $result3 = 0;
+                }
+
+                if($s->a4_userid !=null)
+                {
+                    $result4 = count(explode(',',$s->a4_userid));    
+                }else
+                {
+                    $result4 = 0;
+                }
+                
+                $totalcount=$result1+$result2+$result3+$result4;
+
+                if($result1 >0)
+                {
+                    $per=(100 * $result1) / $totalcount;    
+                }
+                else
+                {
+                    $per=(int)'';
+                }
+
+                if($result2 >0)
+                {
+                    $per2=(100 * $result2) / $totalcount;    
+                }
+                else
+                {
+                    $per2=(int)'';
+                }
+                
+                if($result3 >0)
+                {
+                    $per3=(100 * $result3) / $totalcount;    
+                }
+                else
+                {
+                    $per3=(int)'';
+                }
+
+                if($result4 >0)
+                {
+                    $per4=(100 * $result4) / $totalcount;    
+                }
+                else
+                {
+                    $per4=(int)'';
+                }
+
+                $sub[]="Option_1 : ".floor($per)."%<br> Option_2 : ".floor($per2)."%<br> Option_3 : ".floor($per3)."%<br> Option_4 : ".floor($per4)."%";
+
                 if($s->active==1)
                 {
                     $sub[] = '<label class="label label-success">Active</label></a>';
                 }
+
                 elseif($s->active==0)
                 {
                     $sub[] = '<label class="label label-success">In-Active</label></a>';
                 }
+
                 $delete_url = route('admin.societies.polls.delete', ["society_id" => $society_id, "user_id" => $id]);
 
                 $action = '<div class="btn-part"><a class="edit" href="'.route('admin.societies.polls.edit', ["society_id" => $society_id, "user_id" => $id]).'"><i class="fa fa-pencil-square-o"></i></a>' . ' ';
 
                 $action .= '<a class="delete" onclick="return confirm(`Are you sure you want to delete this record?`)"  href="'.$delete_url.'"><i class="fa fa-trash"></i>&nbsp;</a></div>';
+
                 $sub[] = $action;
+
                 $response[] = $sub;
               }
             $userjson = json_encode(["data" => $response]);
@@ -1828,6 +1962,58 @@ class SocietyController extends Controller
         }
         return redirect()->route('admin.societies.polls.index',$society_id)->with('success','Polls deleted successfully.');
     }
+
+    public function settingspage($society_id)
+    {   
+        $society = Society::find($society_id);
+        $societysettings=SocietySettings::where('society_id',$society_id)->first();
+
+        if($societysettings != null)
+        {
+          return view('admin.societies.settings.index',["society" => $society,'societysettings'=>$societysettings]);  
+        }
+        else
+        {
+
+          return view('admin.societies.settings.index',["society" => $society]);  
+        }
+        
+    }
+
+    public function storesettings($society_id)
+    {
+        $module_name=request('module_name');
+        $array_comp_prod = implode(",", $module_name);
+        $societysettings=new SocietySettings();
+        $societysettings->society_id=$society_id;
+        $societysettings->module_name=$array_comp_prod;
+        $societysettings->save();
+
+         return redirect()->route('admin.societies.settings.index',$society_id)->with("success","Settings Added successfully.");
+    }
+
+    public function updatesettings($society_id,$member_id)
+    {
+        $module_name=request('module_name');
+        if($module_name != null)
+        {
+          $array_comp_prod = implode(",", $module_name);
+        }
+        else
+        {
+          $array_comp_prod = '';
+        }
+        
+        
+        $societysettings=SocietySettings::find($member_id);
+        $societysettings->module_name=$array_comp_prod;
+        $societysettings->save();
+
+        return redirect()->route('admin.societies.settings.index',$society_id)->with("success","Settings updated successfully.");
+
+    }
+
+    
 
 
 

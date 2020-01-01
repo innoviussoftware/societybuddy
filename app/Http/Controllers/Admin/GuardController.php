@@ -16,6 +16,8 @@ use Excel;
 use App\User;
 use App\Member;
 use App\Settings;
+use QrCode;
+
 
 class GuardController extends Controller
 {
@@ -280,11 +282,19 @@ class GuardController extends Controller
                           $member->family_user_id =  0;
                           $member->relation = $dv['relation'];
                           $member->flatType = $dv['flattype'];
+                          $flatname=Flat::select('name')->where('id', $dv['flat'])->first();
+                          $buildingname=Building::select('name')->where('id',$dv['building'])->first();
+                          $orcode='Name: '.$dv['name'].PHP_EOL.'Flat No: '.$buildingname->name.'-'.$flatname->name.PHP_EOL.'Phone: '.$dv['phone']; 
+                          $codeimage=QrCode::format('png')->size(300)->generate($orcode); 
+                          $a = mt_rand(100000,999999); 
+                          $output_file =   $a . '.png';
+                          $dd=Storage::disk('local')->put($output_file, $codeimage);
+                          $member->qrcode=$output_file;    
                           $member->save();
                           $settings=new Settings();
                           $settings->user_id=$insertedId;
                           $settings->save();
-                           dd($$settings);
+                           
                         }
                       }
                   }

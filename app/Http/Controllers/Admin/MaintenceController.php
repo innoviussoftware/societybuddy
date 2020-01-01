@@ -35,7 +35,7 @@ class MaintenceController extends Controller
     public function addEvents($id){
 
       $society = Society::find($id);
-        $roles = Role::memberRoles();
+      $roles = Role::memberRoles();
         if($society){
           $buildings = Building::where('society_id',$id)->get();
           return view('admin.maintence.add',["society" => $society, 'buildings' => $buildings, 'roles' => $roles]);
@@ -47,75 +47,43 @@ class MaintenceController extends Controller
 
     public function store(Request $request,$society_id){
 
-    $user=Auth::user();
 
-      $this->validate($request, [
-          'event_type' => 'required',
-          'title' => 'required',
-          'description' => 'required',
-      ]);
-       
-       dd($request->has('sameamount'));
-        $maintence = new Maintence;
-        $maintence->user_id = $user->id;
+        $this->validate($request, [
+            'amount' => 'required',
+            
+        ]);
+         
+        $building_id=request('building_id');
+        $array_comp_prod = implode(",", $building_id);
+
+        $maintence = new Maintence;        
         $maintence->society_id = $society_id;
-        $maintence->type = request('optionsRadios');
+        $maintence->building_id = $array_comp_prod;
+        $maintence->payment_mode = request('optionsRadios');
         $maintence->maintence_amount = request('amount');
 
-        if( $request->has('sameamount') )
+        if( $request->sameamount == 'on' )
         {
-        
+            $maintence->tenant_amount = request('amount');
         }
         else
         {
-
+            $maintence->tenant_amount = request('amounttenant');
         }
 
-        $maintence->tenant_amount = request('amounttenant');
-        if(request('monthly'))
+        if(isset($request->monthly))
         {
-            $maintence->payment = request('monthly');
+            $maintence->monthlypayment_date = request('monthly');
         }
 
-        if(request('yearly'))
+        if(isset($request->yearly))
         {
-            $maintence->payment = request('yearly');
+            $maintence->yearlypaymentdate = request('yearly');
         }
         $maintence->penalty = request('penalty');
         $maintence->save();
 
-            $token=[];
-            $mysqlvalue= explode(",",$notice->building_id);
-            
-            foreach ($mysqlvalue as $value) {
-              $members=Member::where('building_id',$value)->where('society_id',$society_id)->get();
-              foreach ($members as $value) {
-
-                  $users=User::where('id',$value->user_id)->first();
-                  $token[]=$users->fcm_token;  
-              }
-            }
-
-            $device_id=$token;
-
-            $societyName=Society::where('id',$society_id)->first();
-
-            $pmsg = array(
-                    'body' => request('description'),
-                    'title' => request('title'),
-                    'icon' => 'myicon',
-                    'sound' => 'mySound'
-            );
-
-            $data=array(
-                  'notification_type'=>'Event',
-                  'title'=>request('title'),
-                  'description'=>request('description'),
-            );
-
-            PushNotification::SendPushNotification($pmsg, $data, $device_id);
-
-        return redirect()->route('admin.societies.events.index',$society_id)->with("success","Event added successfully.");
+        return redirect()->route('admin.societies.maintence.index',$society_id)->with("success","Maintenance added successfully.");
     }
 
     public function checkForSocietyAdmin($society_id){
@@ -134,10 +102,10 @@ class MaintenceController extends Controller
 
         $s = Society::find($society_id);
 
-        $b = Event::find($id);
+        $b = Maintence::find($id);
         if($b && $s){
           $buildings = Building::where("society_id",$society_id)->get();
-          return view('admin.events.edit',["society" => $s,"notice" => $b,'buildings'=> $buildings,]);
+          return view('admin.maintence.edit',["society" => $s,"maintence" => $b,'buildings'=> $buildings,]);
         }else{
           return view('admin.errors.404');
         }
@@ -145,41 +113,46 @@ class MaintenceController extends Controller
 
     public function update(Request $request, $society_id, $member_id){
         
-        $user=Auth()->user();
-
-          $this->validate($request, [
-          'event_type' => 'required',
-          'title' => 'required',
-          'description' => 'required',
-          ]);
-        $notice = Event::find($member_id);
+        $this->validate($request, [
+            'amount' => 'required',
+            
+        ]);
+        $notice = Maintence::find($member_id);
 
         if($notice)
         {
             $building_id=request('building_id');
 
             $array_comp_prod = implode(",", $building_id);
-            if ($request->file('attachment')) {
-              $image = $request->attachment;
-              $path = $image->store('event_attachment');
-            }
-            else{
-              $event_path=request('event_file');
-            }
-            $notice->event_type = request('event_type');
-            $notice->title = request('title');
-            $notice->description = request('description');
-            $notice->event_start_date = request('startdate');
-            $notice->event_start_time = request('starttime');
-            $notice->event_end_date = request('enddate');
-            $notice->event_end_time = request('endtime');
-            $notice->event_attachment = isset($path)?$path:$event_path;
-            $notice->building_id = $array_comp_prod;
+
             $notice->society_id = $society_id;
-            $notice->user_id = $user->id;
+            $notice->building_id = $array_comp_prod;
+            $notice->payment_mode = request('optionsRadios');
+            $notice->maintence_amount = request('amount');
+// dd($request->all());
+            if($request->sameamount == 'on' )
+            {
+                $notice->tenant_amount = request('amount');
+            }
+            else
+            {
+                $notice->tenant_amount = request('amounttenant');
+            }
+
+            if(isset($request->monthly))
+            {
+                $notice->monthlypayment_date = request('monthly');
+            }
+
+            if(isset($request->yearly))
+            {
+                $notice->yearlypaymentdate = request('yearly');
+            }
+            $notice->penalty = request('penalty');
+
             $notice->save();
         }
-        return redirect()->route('admin.societies.events.index', $society_id)->with('success','Event updated successfully.');
+        return redirect()->route('admin.societies.maintence.index', $society_id)->with('success','Maintenance updated successfully.');
     }
 
   
@@ -188,11 +161,11 @@ class MaintenceController extends Controller
             
             //$notice = Event::where("society_id",$society_id)->get();
 
-    $notice = \DB::table("events")
-        ->select("events.*",\DB::raw("GROUP_CONCAT(buildings.name) as buildingsname"))
-        ->leftjoin("buildings",\DB::raw("FIND_IN_SET(buildings.id,events.building_id)"),">",\DB::raw("'0'"))
-        ->where('events.society_id',$society_id)
-        ->groupBy("events.id")
+    $notice = \DB::table("maintence")
+        ->select("maintence.*",\DB::raw("GROUP_CONCAT(buildings.name) as buildingsname"))
+        ->leftjoin("buildings",\DB::raw("FIND_IN_SET(buildings.id,maintence.building_id)"),">",\DB::raw("'0'"))
+        ->where('maintence.society_id',$society_id)
+        ->groupBy("maintence.id")
         ->get();
 
 
@@ -200,22 +173,20 @@ class MaintenceController extends Controller
                 $sub = [];
                 $id = $s->id;
                 $sub[] = $id;
-                $sub[] = $s->event_type;
-                $sub[] = $s->title;
-                $sub[] = $s->description;
-                $sub[] = $s->event_start_date .'-'.$s->event_start_time;
-                $sub[] = $s->event_end_date .'-'.$s->event_end_time;
                 $sub[] = $s->buildingsname;
+                $sub[] = $s->maintence_amount;
+                $sub[] = $s->tenant_amount;
+                $sub[] = $s->payment_mode;
+                $sub[] = isset($s->monthlypayment_date)?$s->monthlypayment_date:'-';
+                $sub[] = isset($s->yearlypaymentdate)?$s->yearlypaymentdate:'-';
+                $sub[] = $s->penalty;
 
-                $delete_url = route('admin.societies.events.delete', ["society_id" => $society_id, "member_id" => $id]);
+                $delete_url = route('admin.societies.maintence.delete', ["society_id" => $society_id, "member_id" => $id]);
 
-                $notify_url = route('admin.societies.events.notify', ["society_id" => $society_id, "member_id" => $id]);
              
-                $action = '<div class="btn-part"><a class="edit" href="'.route('admin.societies.events.edit', ["society_id" => $society_id, "notice_id" => $id]).'"><i class="fa fa-pencil-square-o"></i></a>' . ' ';
+                $action = '<div class="btn-part"><a class="edit" href="'.route('admin.societies.maintence.edit', ["society_id" => $society_id, "notice_id" => $id]).'"><i class="fa fa-pencil-square-o"></i></a>' . ' ';
 
-                $action .= '<a class="delete" onclick="return confirm(`Are you sure you want to delete this record?`)"  href="'.$delete_url.'"><i class="fa fa-trash"></i>&nbsp;</a>';
-
-                $action .= '<a class="delete" onclick="return confirm(`Are you sure you want to send notification?`)"  href="'.$notify_url.'"><i class="fa fa-bell-o"></i>&nbsp;</a></div>';
+                $action .= '<a class="delete" onclick="return confirm(`'.$delete_url.'`,`Are you sure you want to delete this record?`)" ><i class="fa fa-trash"></i>&nbsp;</a></div>';
 
                 $sub[] = $action;
 
@@ -226,56 +197,36 @@ class MaintenceController extends Controller
         }
 
         public function delete($society_id,$member_id){
-          $notice = Event::find($member_id);
+          $notice = Maintence::find($member_id);
 
           if($notice)
           {
             $notice->delete();
           }
 
-          return redirect()->route('admin.societies.events.index',$society_id)->with('success','Notice deleted successfully.');
+          return redirect()->route('admin.societies.maintence.index',$society_id)->with('success','Maintenance deleted successfully.');
 
     }
 
-    public function notify($society_id,$member_id){
-          
-          $notice = Event::find($member_id);
-
-          if($notice)
-          {
-
-            $token=[];
-            $mysqlvalue= explode(",",$notice->building_id);
-            
-            foreach ($mysqlvalue as $value) {
-              $members=Member::where('building_id',$value)->where('society_id',$society_id)->get();
-              foreach ($members as $value) {
-
-                  $users=User::where('id',$value->user_id)->first();
-                  $token[]=$users->fcm_token;  
-              }
-            }
-
-            $device_id=$token;
-
-            $societyName=Society::where('id',$society_id)->first();
-
-            $pmsg = array(
-                    'body' => $notice->description,
-                    'title' => $notice->title,
-                    'icon' => 'myicon',
-                    'sound' => 'mySound'
-            );
-
-            $data=array(
-                  'notification_type'=>'Event',
-                  'title'=>$notice->title,
-                  'description'=>$notice->description,
-            );
-
-            PushNotification::SendPushNotification($pmsg, $data, $device_id);
-
-          }
-          return redirect()->route('admin.societies.events.index',$society_id)->with('success','Notification sent successfully.');
+    public function maintencepayment($id)
+    {
+        $society = Society::find($id);
+        if($society){
+          $buildings = Building::where('society_id',$id)->get();
+          return view('admin.societies.maintence_member_payment.index',["society" => $society,'buildings'=>$buildings]);
+        }else{
+          return view('admin.errors.404');
         }
+    }
+
+    public function buildingwisemember($id,$society_id)
+    {
+        $members=Member::where("building_id",$id)->where("society_id",$society_id)->where('relation','=','self')->with('vehicle','user','building','flat')->get();
+        
+        return response()->json($members);
+    }
+
+
+
+    
 }

@@ -117,7 +117,13 @@
                 <label>Image</label>
                 <input type="file" class="form-control" name="image" accept="image/*">
               </div>
-              <img src="{{env('APP_URL_STORAGE'). $member->user->image }}" width="150"/>
+              
+              @if($member->user->image != null)
+                  <img src="{{env('APP_URL_STORAGE'). $member->user->image }}" width="150"/>
+                @else
+                  <?php $img = asset('no-image.png');?>
+                  <img src="{{$img}}" width="150"/>
+                @endif
             </div>
           </div>
 

@@ -90,6 +90,14 @@
               <div class="form-group">
                 <label>Attachment</label>
                 <input type="file" name="attachment" class="form-control" accept="application/pdf,image/png, image/jpg">
+                @if($notice->event_attachment != null)
+                  <img src="{{env('APP_URL_STORAGE'). $notice->event_attachment }}" width="150"/>
+                @else
+                  <?php $img = asset('amenities image.png');?>
+                  <img src="{{$img}}" width="150"/>
+                @endif
+                
+
               </div>
              
             </div>

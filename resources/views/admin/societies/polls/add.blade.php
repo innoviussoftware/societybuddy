@@ -121,7 +121,9 @@ $(document).ready(function (){
       getFlats(id);
     });
 
-    $('#datepicker').datetimepicker();
+    $('#datepicker').datetimepicker({  
+      
+    });
 
     function getFlats(id){
       $.ajax({

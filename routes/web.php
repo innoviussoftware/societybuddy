@@ -184,7 +184,7 @@ Route::name('admin.')->prefix('admin')->middleware(['auth'])->group(function () 
   Route::get('/societies/{society_id}/events/notify/{notice_id}', 'Admin\EventController@notify')->middleware(['role:admin|sub_admin|society_admin'])->name('societies.events.notify');
 
 
-
+  // Maintence Configrutation
   Route::get('/societies/{society_id}/maintence', 'Admin\MaintenceController@index')->middleware(['role:admin|sub_admin|society_admin'])->name('societies.maintence.index');
   
   Route::get('/societies/{society_id}/array/maintence', 'Admin\MaintenceController@Array')->middleware(['role:admin|sub_admin|society_admin'])->name('societies.arrayMaintence');
@@ -199,7 +199,23 @@ Route::name('admin.')->prefix('admin')->middleware(['auth'])->group(function () 
 
   Route::get('/societies/{society_id}/delete/maintence/{user_id}', 'Admin\MaintenceController@delete')->middleware(['role:admin|sub_admin|society_admin'])->name('societies.maintence.delete');
 
-  Route::get('/societies/{society_id}/maintence/notify/{notice_id}', 'Admin\MaintenceController@notify')->middleware(['role:admin|sub_admin|society_admin'])->name('societies.maintence.notify');
+  // Maintence Payment Configrutation
+
+  Route::get('/societies/{society_id}/maintencepayment', 'Admin\MaintenceController@maintencepayment')->middleware(['role:admin|sub_admin|society_admin'])->name('societies.maintencepayment.index');
+
+  Route::get('/societies/{society_id}/members', 'Admin\MaintenceController@buildingwisemember')->middleware(['role:admin|sub_admin|society_admin'])->name('societies.members.index');  
+
+  Route::get('/societies/members/byBuilding/{building_id}/{society_id}', 'Admin\MaintenceController@buildingwisemember')->name('societies.byBuilding');
+  
+
+  //Settings
+
+  Route::get('/societies/{society_id}/settings', 'Admin\SocietyController@settingspage')->middleware(['role:admin|sub_admin|society_admin'])->name('societies.settings.index');
+
+  Route::post('/societies/{society_id}/settings/store', 'Admin\SocietyController@storesettings')->middleware(['role:admin|sub_admin|society_admin'])->name('societies.settings.store');
+  
+  Route::patch('/societies/{society_id}/settings/update/{member_id}', 'Admin\SocietyController@updatesettings')->middleware(['role:admin|sub_admin|society_admin'])->name('societies.settings.update');
+
 
   ///Services Provider
 
@@ -307,5 +323,23 @@ Route::name('admin.')->prefix('admin')->middleware(['auth'])->group(function () 
     Route::get('/view/notification/{id}', 'Admin\SocietyController@viewreferralnotification')->name('referral.viewnotification');
     //Domestic Helpers OutReportsEntry
     Route::get('/societies/{society_id}/delete/reports/{type}/{id}', 'Admin\SocietyController@domestichelperoutreports')->middleware(['role:admin|sub_admin|society_admin'])->name('societies.reports.out');
+
+
+//Amenties 
+  Route::get('/societies/{society_id}/amenities', 'Admin\AmentiesController@indexAmenties')->middleware(['role:admin|sub_admin|society_admin'])->name('societies.amenties.index');
+
+  Route::get('/societies/{society_id}/array/amenities', 'Admin\AmentiesController@ArrayAmenties')->middleware(['role:admin|sub_admin|society_admin'])->name('societies.arrayamenties');
+
+  Route::get('/societies/{society_id}/amenities/add', 'Admin\AmentiesController@addAmenties')->middleware(['role:admin|sub_admin|society_admin'])->name('societies.amenties.add');
+
+  Route::post('/societies/{society_id}/amenities/store', 'Admin\AmentiesController@storeAmenties')->middleware(['role:admin|sub_admin|society_admin'])->name('societies.amenties.store');
+
+  Route::get('/societies/{society_id}/amenities/edit/{member_id}', 'Admin\AmentiesController@editAmenties')->middleware(['role:admin|sub_admin|society_admin'])->name('societies.amenties.edit');
+
+  Route::patch('/societies/{society_id}/amenities/update/{member_id}', 'Admin\AmentiesController@updateAmenties')->middleware(['role:admin|sub_admin|society_admin'])->name('societies.amenties.update');
+
+  Route::get('/societies/{society_id}/delete/amenities/{member_id}', 'Admin\AmentiesController@deleteAmenties')->middleware(['role:admin|sub_admin|society_admin'])->name('societies.amenties.delete');
+
+  Route::get('/societies/{society_id}/status/amenities/{user_id}/{status}', 'Admin\AmentiesController@changestatus')->middleware(['role:admin|sub_admin|society_admin'])->name('societies.amenties.changestatus');
 
 });
